@@ -19,7 +19,7 @@ jobs:
       - name: Log in to Nexus Docker registry
         uses: docker/login-action@v3
         with:
-          registry: registry.vwach.de
+          registry: registry.sokutan.de
           username: ${{ secrets.NEXUS_USERNAME }}
           password: ${{ secrets.NEXUS_PASSWORD }}
 
@@ -31,7 +31,7 @@ jobs:
         id: meta-frontend
         uses: docker/metadata-action@v5
         with:
-          images: registry.vwach.de/${{ env.repo }}-frontend
+          images: registry.sokutan.de/${{ env.repo }}-frontend
           tags: type=ref,event=tag
 
       - name: Build and push Docker image frontend
