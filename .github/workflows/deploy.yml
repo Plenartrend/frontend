@@ -36,7 +36,7 @@ jobs:
 
       - name: Clone manifests repository
         run: |
-          git clone git@github.com:Plenartrend/frontend.git manifests-repo
+          git clone git@github.com:Plenartrend/infrastructure.git manifests-repo
           cd manifests-repo
           git config user.name "GitHub Actions Frontend"
           git config user.email "actions@github.com"
