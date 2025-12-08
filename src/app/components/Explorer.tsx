@@ -49,7 +49,7 @@ export function Explorer() {
     <div className="space-y-6">
       <div>
         <h2 className="text-gray-900 mb-2">Explorer</h2>
-        <p className="text-gray-600">Erkunden Sie verschiedene Themen, Abgeordnete und Regionen</p>
+        <p className="text-gray-600">Erkunden Sie verschiedene Themen und Regionen</p>
       </div>
 
       <Tabs defaultValue="themes" className="w-full">
