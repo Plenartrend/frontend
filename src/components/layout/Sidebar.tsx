@@ -3,12 +3,17 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { LayoutDashboard, Compass, Flag, FileText, Bell, Bookmark, Star, CalendarDays, Loader2, ChevronDown, ChevronRight, Mic, User, Hash } from "lucide-react";
+import { Compass, Flag, FileText, Bell, Bookmark, Star, CalendarDays, Loader2, ChevronDown, ChevronRight, Mic, User, Hash, X } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { useWatchlist } from "@/context/WatchlistContext";
 import { useEffect, useState } from "react";
 
-export function Sidebar() {
+interface SidebarProps {
+  isOpen?: boolean;
+  onClose?: () => void;
+}
+
+export function Sidebar({ isOpen = false, onClose }: SidebarProps) {
   const pathname = usePathname();
   const { user } = useAuth();
   const { watchedTopics, watchedPoliticians } = useWatchlist();
@@ -18,6 +23,13 @@ export function Sidebar() {
   const [isExplorerExpanded, setIsExplorerExpanded] = useState(true);
 
   const isExplorerActive = pathname.startsWith('/explorer');
+
+  // Close sidebar on navigation (mobile)
+  useEffect(() => {
+    if (isOpen && onClose) {
+      onClose();
+    }
+  }, [pathname]);
 
   useEffect(() => {
     fetch('/api/v1/bundestag/status')
@@ -39,12 +51,31 @@ export function Sidebar() {
   }, [user, watchedTopics, watchedPoliticians]);
 
   return (
-    <div className="flex h-full w-72 flex-col bg-slate-900 text-white">
-      <div className="flex h-16 items-center px-6 font-bold text-2xl tracking-wider border-b border-slate-800">
-        PLENARTREND
-      </div>
+    <>
+      {/* Mobile Backdrop */}
+      <div 
+        className={cn(
+          "fixed inset-0 z-40 bg-slate-900/80 backdrop-blur-sm transition-opacity lg:hidden",
+          isOpen ? "opacity-100" : "opacity-0 pointer-events-none"
+        )}
+        onClick={onClose}
+      />
+
+      <div className={cn(
+        "fixed inset-y-0 left-0 z-50 flex h-full w-72 flex-col bg-slate-900 text-white transition-transform duration-300 ease-in-out lg:static lg:translate-x-0",
+        isOpen ? "translate-x-0" : "-translate-x-full"
+      )}>
+        <div className="flex h-16 items-center justify-between px-6 border-b border-slate-800">
+          <span className="font-bold text-2xl tracking-wider">PLENARTREND</span>
+          <button 
+            onClick={onClose}
+            className="lg:hidden text-slate-400 hover:text-white"
+          >
+            <X className="h-6 w-6" />
+          </button>
+        </div>
       
-      <div className="flex-1 flex flex-col min-h-0 overflow-y-auto">
+        <div className="flex-1 flex flex-col min-h-0 overflow-y-auto">
         <nav className="flex-1 px-3 py-4 space-y-1">
           
           <div>
@@ -231,5 +262,6 @@ export function Sidebar() {
         </div>
       </div>
     </div>
+    </>
   );
 }
