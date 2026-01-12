@@ -1,6 +1,7 @@
 "use client";
 
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { useState, useEffect } from 'react';
 
 interface DataPoint {
   date: string;
@@ -14,6 +15,15 @@ interface TrendChartProps {
 }
 
 export function TrendChart({ data, color = "#2563eb", yAxisLabel }: TrendChartProps) {
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 640);
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
   return (
     <div className="h-[300px] w-full">
       <ResponsiveContainer width="100%" height="100%">
@@ -38,7 +48,18 @@ export function TrendChart({ data, color = "#2563eb", yAxisLabel }: TrendChartPr
             axisLine={false} 
             tickLine={false} 
             tick={{ fill: '#64748b', fontSize: 12 }} 
-            label={yAxisLabel ? { value: yAxisLabel, angle: -90, position: 'insideLeft', fill: '#64748b', fontSize: 12 } : undefined}
+            label={yAxisLabel ? { 
+              value: yAxisLabel, 
+              angle: -90, 
+              position: 'insideLeft', 
+              fill: '#64748b', 
+              fontSize: 12,
+              offset: isMobile ? 5 : 10,
+              dx: -10, 
+              dy: 10,
+              style: { textAnchor: 'middle' }
+            } : undefined}
+            width={isMobile ? 35 : 50}
           />
           <Tooltip 
             contentStyle={{ backgroundColor: '#fff', borderRadius: '8px', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
