@@ -50,6 +50,6 @@ jobs:
       - name: Commit and push changes
         run: |
           cd manifests-repo
-          git add manifests/frontend-deployment.yml
+          git add manifests/frontend/frontend-deployment.yml
           git commit -m "Update frontend deployment to ${{ github.sha }}" || exit 0
           git push origin main
