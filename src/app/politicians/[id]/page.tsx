@@ -79,15 +79,23 @@ export default function PoliticianDetail() {
         <span className="font-medium text-slate-900">{politician.name}</span>
       </nav>
 
-      <div className="bg-white rounded-xl shadow border border-slate-200 p-6 md:p-8 flex flex-col md:flex-row gap-8 items-start">
+      <div className="bg-white rounded-xl shadow border border-slate-200 p-6 md:p-8 flex flex-col md:flex-row gap-8 items-start relative">
+        <div className="absolute top-6 right-6 flex gap-2 md:static md:top-auto md:right-auto">
+          <button className="inline-flex items-center gap-2 rounded-md bg-white px-3 py-2 text-sm font-semibold text-slate-700 shadow-sm ring-1 ring-inset ring-slate-300 hover:bg-slate-50">
+            <Share2 className="h-4 w-4" />
+            <span className="hidden sm:inline">Profil Teilen</span>
+          </button>
+          <WatchButton id={id} type="politician" label="Beobachten" />
+        </div>
+
         <div className="flex-shrink-0">
           <div className="h-32 w-32 rounded-full bg-slate-200 flex items-center justify-center text-4xl font-bold text-slate-400 border-4 border-white shadow-sm">
              {politician.name.split(' ').map((n: string) => n[0]).join('')}
           </div>
         </div>
-        <div className="flex-1">
+        <div className="flex-1 w-full">
           <div className="flex flex-col md:flex-row md:justify-between md:items-start gap-4">
-            <div>
+            <div className="pr-24 md:pr-0">
                <h1 className="text-3xl font-bold text-slate-900">{politician.name}</h1>
                <div className="flex items-center gap-2 mt-2 text-lg text-slate-600">
                  <span className="font-semibold">{politician.party}</span>
@@ -98,13 +106,6 @@ export default function PoliticianDetail() {
                   <span>Alter: <strong className="text-slate-700">{politician.age}</strong></span>
                   <span>Geschlecht: <strong className="text-slate-700">{politician.gender}</strong></span>
                </div>
-            </div>
-            <div className="flex gap-2">
-              <button className="inline-flex items-center gap-2 rounded-md bg-white px-3 py-2 text-sm font-semibold text-slate-700 shadow-sm ring-1 ring-inset ring-slate-300 hover:bg-slate-50">
-                <Share2 className="h-4 w-4" />
-                Profil Teilen
-              </button>
-              <WatchButton id={id} type="politician" label="Beobachten" />
             </div>
           </div>
         </div>

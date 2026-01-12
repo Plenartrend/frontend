@@ -109,7 +109,7 @@ export default function NewCampaignPage() {
                 >
                   {isCompleted ? <Check className="h-5 w-5" /> : <step.icon className="h-5 w-5" />}
                 </div>
-                <span className={cn("text-xs font-medium", isCurrent ? "text-blue-600" : "text-slate-500")}>
+                <span className={cn("text-xs font-medium", isCurrent ? "text-blue-600 block" : "text-slate-500 hidden sm:block")}>
                   {step.title}
                 </span>
               </div>

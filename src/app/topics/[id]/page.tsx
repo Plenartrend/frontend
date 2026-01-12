@@ -104,8 +104,8 @@ export default function TopicDetail() {
             <h2 className="text-lg font-bold text-slate-900 mb-4">Position & Relevanz nach Partei</h2>
             <div className="space-y-4">
               {partyPositions.map((p: any) => (
-                <div key={p.party} className="flex items-center gap-4">
-                  <div className="w-16 font-semibold text-slate-700">{p.party}</div>
+                <div key={p.party} className="flex items-center gap-2 sm:gap-4" title={`Stimmung: ${p.sentiment}, Relevanz: ${p.relevance}%`}>
+                  <div className="w-10 sm:w-16 font-semibold text-slate-700 text-xs sm:text-base truncate">{p.party}</div>
                   <div className="flex-1 relative h-8 bg-slate-100 rounded-md overflow-hidden flex items-center">
                     <div className="absolute left-1/2 top-0 bottom-0 w-px bg-slate-300"></div>
                     <div 
@@ -118,10 +118,9 @@ export default function TopicDetail() {
                      <div 
                       className="absolute h-3 w-3 rounded-full bg-slate-900 border-2 border-white"
                       style={{ left: `${p.relevance}%` }}
-                      title={`Relevanz: ${p.relevance}%`}
                     ></div>
                   </div>
-                   <div className="w-12 text-right text-xs text-slate-500">{p.sentiment > 0 ? '+' : ''}{p.sentiment}</div>
+                   <div className="hidden sm:block w-12 text-right text-xs text-slate-500">{p.sentiment > 0 ? '+' : ''}{p.sentiment}</div>
                 </div>
               ))}
               <p className="text-xs text-slate-400 mt-2 text-center">Balken: Stimmung (Links=Negativ, Rechts=Positiv) • Punkt: Relevanz innerhalb der Partei</p>
@@ -137,9 +136,9 @@ export default function TopicDetail() {
               <ul className="divide-y divide-slate-100">
                 {legislation.map((leg: any) => (
                   <li key={leg.id} className="py-3">
-                    <div className="flex justify-between">
+                    <div className="flex justify-between items-start gap-4">
                        <p className="font-medium text-slate-900">{leg.title}</p>
-                       <span className={`px-2 py-1 rounded text-xs font-medium ${leg.status === 'Verabschiedet' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}`}>
+                       <span className={`px-2 py-1 rounded text-xs font-medium whitespace-nowrap shrink-0 ${leg.status === 'Verabschiedet' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}`}>
                          {leg.status}
                        </span>
                     </div>

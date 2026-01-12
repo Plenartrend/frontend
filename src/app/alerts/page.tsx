@@ -159,8 +159,8 @@ export default function AlertsPage() {
                           {getIcon(notification.type)}
                         </div>
                         <div className="flex-1">
-                          <div className="flex justify-between items-start">
-                            <div className="flex items-center gap-2">
+                          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-1 sm:gap-0">
+                            <div className="flex flex-wrap items-center gap-2">
                                <p className="text-sm font-medium text-slate-900">{notification.title}</p>
                                {isBehaviorChange && (
                                  <span className="inline-flex items-center rounded-md bg-blue-50 px-1.5 py-0.5 text-[10px] font-medium text-blue-700 ring-1 ring-inset ring-blue-700/10">
@@ -168,7 +168,7 @@ export default function AlertsPage() {
                                  </span>
                                )}
                             </div>
-                            <span className="text-xs text-slate-400 whitespace-nowrap ml-2">
+                            <span className="text-xs text-slate-400 whitespace-nowrap mt-1 sm:mt-0 sm:ml-2">
                               {new Date(notification.timestamp).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })}
                             </span>
                           </div>
