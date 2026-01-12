@@ -25,7 +25,7 @@ export function TrendChart({ data, color = "#2563eb", yAxisLabel }: TrendChartPr
   }, []);
 
   return (
-    <div className="h-[300px] w-full">
+    <div className="h-[300px] w-full focus:ring-1 focus:ring-slate-100 focus:outline-none outline-none" tabIndex={-1} style={{ WebkitTapHighlightColor: 'transparent' }}>
       <ResponsiveContainer width="100%" height="100%">
         <AreaChart
           data={data}

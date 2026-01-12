@@ -88,7 +88,7 @@ export default function ExplorerTopicsPage() {
           <p className="text-sm text-slate-500">Entdecken Sie aktuelle politische Debatten nach Kategorien.</p>
         </div>
 
-        <div className="flex flex-row gap-3 items-center bg-white p-4 rounded-lg shadow-sm border border-slate-200">
+        <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center bg-white p-4 rounded-lg shadow-sm border border-slate-200">
            <div className="relative flex-1 min-w-0">
             <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
               <Search className="h-4 w-4 text-slate-400" aria-hidden="true" />
@@ -102,7 +102,7 @@ export default function ExplorerTopicsPage() {
             />
           </div>
           {/* Fixed width for results count to prevent layout shift */}
-          <div className="w-auto px-2 text-sm text-slate-500 italic whitespace-nowrap shrink-0">
+          <div className="w-full sm:w-auto px-2 text-sm text-slate-500 italic whitespace-nowrap shrink-0 text-right">
              {filteredTopics.length} Ergebnisse
           </div>
         </div>

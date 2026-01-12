@@ -82,7 +82,7 @@ export default function ExplorerPoliticiansPage() {
           <p className="text-sm text-slate-500">Finden Sie Politiker nach Fraktion und Aktivität.</p>
         </div>
 
-        <div className="flex flex-row gap-3 items-center bg-white p-4 rounded-lg shadow-sm border border-slate-200">
+        <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center bg-white p-4 rounded-lg shadow-sm border border-slate-200">
            <div className="relative flex-1 min-w-0">
             <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
               <Search className="h-4 w-4 text-slate-400" aria-hidden="true" />
@@ -96,7 +96,7 @@ export default function ExplorerPoliticiansPage() {
             />
           </div>
 
-          <div className="w-auto px-2 text-sm text-slate-500 italic whitespace-nowrap shrink-0">
+          <div className="w-full sm:w-auto px-2 text-sm text-slate-500 italic whitespace-nowrap shrink-0 text-right">
              {filteredPoliticians.length} Ergebnisse
           </div>
 
@@ -133,7 +133,7 @@ export default function ExplorerPoliticiansPage() {
                   <Link key={politician.id} href={`/politicians/${politician.id}`} className="group">
                     <div className="flex flex-col h-full overflow-hidden rounded-lg bg-white shadow transition-all duration-200 hover:shadow-lg hover:-translate-y-1 border border-slate-100 ring-1 ring-slate-200 hover:ring-blue-500/50">
                       <div className="p-5 flex-1">
-                         <div className="flex justify-between items-start">
+                         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4 sm:gap-0">
                             <div className="flex items-center gap-4">
                                <div className="h-16 w-16 rounded-full bg-slate-200 flex-shrink-0 flex items-center justify-center text-xl font-bold text-slate-600 overflow-hidden border-2 border-white shadow-sm ring-1 ring-slate-100">
                                  {politician.name.split(' ').map((n: string) => n[0]).join('')}
@@ -151,9 +151,9 @@ export default function ExplorerPoliticiansPage() {
                                </div>
                             </div>
 
-                            <div className="flex flex-col items-end gap-1.5 max-w-[45%]">
+                            <div className="flex flex-col items-start sm:items-end gap-1.5 w-full sm:w-auto sm:max-w-[45%]">
                                <span className="text-xs uppercase font-bold text-slate-400 tracking-wider">Top Themen</span>
-                               <div className="flex flex-wrap justify-end gap-1.5">
+                               <div className="flex flex-wrap justify-start sm:justify-end gap-1.5 w-full">
                                   {politician.topTopics?.slice(0, 3).map((t: any, i: number) => (
                                     <span key={i} className="inline-flex items-center rounded-full bg-blue-50 px-2.5 py-0.5 text-xs font-medium text-blue-700 ring-1 ring-inset ring-blue-700/10 hover:bg-blue-100 transition-colors whitespace-nowrap">
                                       {t.topic}

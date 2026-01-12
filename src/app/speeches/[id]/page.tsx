@@ -76,12 +76,12 @@ export default function SpeechDetail() {
       <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-8">
         <div className="flex flex-col md:flex-row gap-6 justify-between items-center">
            <div className="space-y-2 flex-1">
-              <div className="flex items-center gap-2 text-sm text-blue-600 font-medium">
+              <div className="flex flex-wrap items-center gap-y-1 gap-x-2 text-xs sm:text-sm text-blue-600 font-medium">
                  <span className="bg-blue-50 px-2 py-1 rounded-md">{speech.type}</span>
-                 <span>•</span>
-                 <span>{speech.session}</span>
+                 <span className="hidden sm:inline">•</span>
+                 <span className="w-full sm:w-auto">{speech.session}</span>
               </div>
-              <h1 className="text-3xl font-bold text-slate-900 leading-tight">{speech.title}</h1>
+              <h1 className="text-xl sm:text-3xl font-bold text-slate-900 leading-tight">{speech.title}</h1>
            </div>
 
            {/* Speaker Card */}

@@ -104,13 +104,13 @@ export default function AlertsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-slate-900">Benachrichtigungen</h1>
           <p className="text-sm text-slate-500">Bleiben Sie auf dem Laufenden über wichtige Änderungen und Updates.</p>
         </div>
-        <div className="flex items-center gap-2">
-           <div className="relative inline-block text-left">
+        <div className="flex items-center gap-2 w-full sm:w-auto">
+           <div className="relative inline-block text-left w-full sm:w-auto">
               <select 
                 value={filterType}
                 onChange={(e) => setFilterType(e.target.value)}
@@ -184,7 +184,7 @@ export default function AlertsPage() {
                       </div>
 
                       {isBehaviorChange && isItemExpanded && (
-                        <div className="px-4 pb-5 ml-14">
+                        <div className="px-4 pb-5 sm:ml-14">
                            <div className="bg-slate-50 rounded-lg p-4 border border-slate-200">
                               <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Analyse der Positionsänderung</h4>
                               
