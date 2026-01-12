@@ -1,6 +1,0 @@
-/.next
-/examples
-/node_modules
-.eslintrc.js
-prettier.config.js
-/src/api

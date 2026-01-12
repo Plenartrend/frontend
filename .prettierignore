@@ -1,6 +1,0 @@
-/.next
-/node_modules
-/src/api
-.eslintrc.js
-prettier.config.js
-/yarn.lock
