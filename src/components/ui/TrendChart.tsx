@@ -55,11 +55,11 @@ export function TrendChart({ data, color = "#2563eb", yAxisLabel }: TrendChartPr
               fill: '#64748b', 
               fontSize: 12,
               offset: isMobile ? 5 : 10,
-              dx: -10, 
-              dy: 10,
+              dx: isMobile ? -10 : 0, 
+              dy: isMobile ? 10 : 0,
               style: { textAnchor: 'middle' }
             } : undefined}
-            width={isMobile ? 35 : 50}
+            width={isMobile ? 35 : 60}
           />
           <Tooltip 
             contentStyle={{ backgroundColor: '#fff', borderRadius: '8px', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}

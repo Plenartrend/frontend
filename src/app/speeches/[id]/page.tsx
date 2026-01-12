@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronRight, Calendar, Clock, FileText, Share2, Loader2, ExternalLink } from "lucide-react";
+import { ChevronRight, Calendar, Clock, FileText, Share2, Loader2, ExternalLink, ThumbsUp, ThumbsDown, Minus } from "lucide-react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { BackButton } from "@/components/ui/BackButton";
@@ -167,6 +167,31 @@ export default function SpeechDetail() {
                   </div>
                </dl>
             </div>
+
+            {speech.sentiment && (() => {
+               const getSentimentConfig = (sentiment: string) => {
+                  switch (sentiment?.toLowerCase()) {
+                    case 'stark positiv': return { color: 'text-green-700 bg-green-50 ring-green-600/20', icon: ThumbsUp, label: 'Stark Positiv' };
+                    case 'positiv': return { color: 'text-green-600 bg-green-50 ring-green-600/10', icon: ThumbsUp, label: 'Positiv' };
+                    case 'neutral': return { color: 'text-slate-600 bg-slate-50 ring-slate-500/10', icon: Minus, label: 'Neutral' };
+                    case 'negativ': return { color: 'text-red-600 bg-red-50 ring-red-600/10', icon: ThumbsDown, label: 'Negativ' };
+                    case 'stark negativ': return { color: 'text-red-700 bg-red-50 ring-red-600/20', icon: ThumbsDown, label: 'Stark Negativ' };
+                    default: return null;
+                  }
+               };
+               const config = getSentimentConfig(speech.sentiment);
+               if (!config) return null;
+               const Icon = config.icon;
+               return (
+                  <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+                     <h3 className="text-sm font-bold text-slate-900 mb-4 uppercase tracking-wider">Grundstimmung</h3>
+                     <div className={`flex items-center gap-3 p-3 rounded-lg ring-1 ring-inset ${config.color}`}>
+                        <Icon className="h-5 w-5" />
+                        <span className="font-semibold text-sm">{config.label}</span>
+                     </div>
+                  </div>
+               );
+            })()}
 
             <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
                <h3 className="text-sm font-bold text-slate-900 mb-4 uppercase tracking-wider">Verwandte Themen</h3>

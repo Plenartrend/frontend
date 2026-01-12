@@ -18,6 +18,7 @@ export interface SpeechSnippet {
   party: string;
   text: string;
   date: string;
+  sentiment?: string;
   fullSpeechId?: string;
 }
 
@@ -78,6 +79,7 @@ export interface FullSpeech {
   topicId?: string;
   relatedTopics: string[];
   content: string;
+  sentiment?: string;
   sourceUrl?: string;
 }
 

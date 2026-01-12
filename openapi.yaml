@@ -292,6 +292,9 @@ components:
         date:
           type: string
           format: date-time
+        sentiment:
+          type: string
+          enum: ["stark positiv", "positiv", "neutral", "negativ", "stark negativ"]
         fullSpeechId:
           type: string
 
@@ -408,6 +411,9 @@ components:
             type: string
         content:
           type: string
+        sentiment:
+          type: string
+          enum: ["stark positiv", "positiv", "neutral", "negativ", "stark negativ"]
         sourceUrl:
           type: string
 

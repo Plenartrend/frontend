@@ -184,7 +184,7 @@ export function Header({ onMenuClick }: HeaderProps) {
         )}
       </div>
       
-      <div className="flex items-center gap-x-4 relative flex-none">
+      <div className="flex items-center gap-x-4 relative flex-none ml-auto">
         {user && (
           <div className="relative">
             <button 

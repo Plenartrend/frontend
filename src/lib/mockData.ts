@@ -297,6 +297,7 @@ Lassen Sie uns dieses Gesetz so gestalten, dass es Technologieoffenheit atmet un
     session: '20. Wahlperiode, 142. Sitzung',
     topicId: 't1',
     relatedTopics: ['Umwelt', 'Klima'],
+    sentiment: 'stark positiv',
     sourceUrl: 'https://www.bundestag.de/dokumente/protokolle/plenarprotokolle/plenarprotokoll/-/20/142',
     content: `Frau Präsidentin, liebe Kolleginnen und Kollegen,
 
@@ -318,6 +319,7 @@ Dieses Gesetz ist ein Meilenstein. Es priorisiert endlich die Erneuerbaren als d
     session: '20. Wahlperiode, 145. Sitzung',
     topicId: 't13',
     relatedTopics: ['Industrie', 'Innovation'],
+    sentiment: 'positiv',
     sourceUrl: 'https://www.bundestag.de/dokumente/protokolle/plenarprotokolle/plenarprotokoll/-/20/145',
     content: `Herr Präsident, meine Damen und Herren,
 
