@@ -45,7 +45,7 @@ jobs:
         run: |
           cd manifests-repo
           IMAGE_TAG="${{ github.sha }}"
-          sed -i "s|image: registry.sokutan.de/plenartrend/frontend:.*|image: registry.sokutan.de/plenartrend/frontend:${IMAGE_TAG}|" manifests/frontend-deployment.yml
+          sed -i "s|image: registry.sokutan.de/plenartrend/frontend:.*|image: registry.sokutan.de/plenartrend/frontend:${IMAGE_TAG}|" manifests/frontend/frontend-deployment.yml
 
       - name: Commit and push changes
         run: |
