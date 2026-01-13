@@ -80,7 +80,7 @@ export default function PoliticianDetail() {
       </nav>
 
       <div className="bg-white rounded-xl shadow border border-slate-200 p-6 md:p-8 flex flex-col md:flex-row gap-8 items-start relative">
-        <div className="absolute top-6 right-6 flex flex-col-reverse gap-2 md:flex-row md:static md:top-auto md:right-auto">
+        <div className="absolute top-6 right-6 flex flex-col-reverse gap-2 md:flex-row">
           <button className="inline-flex items-center gap-2 rounded-md bg-white px-3 py-2 text-sm font-semibold text-slate-700 shadow-sm ring-1 ring-inset ring-slate-300 hover:bg-slate-50">
             <Share2 className="h-4 w-4" />
             <span>Profil Teilen</span>
