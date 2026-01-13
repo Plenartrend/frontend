@@ -181,7 +181,7 @@ export default function PoliticianDetail() {
 
             <div className="bg-white p-6 rounded-lg shadow border border-slate-100">
                <h2 className="text-lg font-bold text-slate-900 mb-4">Aktivitätstrend über Zeit</h2>
-               <TrendChart data={activityData} yAxisLabel="Aktivitätsindex" />
+               <TrendChart data={activityData} yAxisLabel="Aktivitätsindex" interactive={false} />
                <p className="text-xs text-slate-400 mt-2 text-center">Kombinierte Metrik aus Reden, Anfragen und Abstimmungen.</p>
             </div>
          </div>

@@ -12,9 +12,10 @@ interface TrendChartProps {
   data: DataPoint[];
   color?: string;
   yAxisLabel?: string;
+  interactive?: boolean;
 }
 
-export function TrendChart({ data, color = "#2563eb", yAxisLabel }: TrendChartProps) {
+export function TrendChart({ data, color = "#2563eb", yAxisLabel, interactive = true }: TrendChartProps) {
   const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
@@ -25,8 +26,12 @@ export function TrendChart({ data, color = "#2563eb", yAxisLabel }: TrendChartPr
   }, []);
 
   return (
-    <div className="h-[300px] w-full focus:ring-1 focus:ring-slate-100 focus:outline-none outline-none" tabIndex={-1} style={{ WebkitTapHighlightColor: 'transparent' }}>
-      <ResponsiveContainer width="100%" height="100%">
+    <div
+      className={`h-[300px] w-full focus:ring-1 focus:ring-slate-100 focus:outline-none outline-none ${!interactive ? 'pointer-events-none' : ''}`}
+      tabIndex={-1}
+      style={{ WebkitTapHighlightColor: 'transparent' }}
+    >
+        <ResponsiveContainer width="100%" height="100%">
         <AreaChart
           data={data}
           margin={{
@@ -48,6 +53,8 @@ export function TrendChart({ data, color = "#2563eb", yAxisLabel }: TrendChartPr
             axisLine={false} 
             tickLine={false} 
             tick={{ fill: '#64748b', fontSize: 12 }} 
+            allowDecimals={false}
+            tickFormatter={(value: number) => Math.round(value).toString()}
             label={yAxisLabel ? { 
               value: yAxisLabel, 
               angle: -90, 
@@ -65,6 +72,16 @@ export function TrendChart({ data, color = "#2563eb", yAxisLabel }: TrendChartPr
             contentStyle={{ backgroundColor: '#fff', borderRadius: '8px', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
             itemStyle={{ color: '#0f172a' }}
             cursor={{ stroke: '#94a3b8', strokeWidth: 1 }}
+            formatter={(value?: string | number | (string | number)[]) => {
+              if (value === undefined) return ["", "Wert"];
+              const numericValue = Array.isArray(value)
+                ? Number(value[0])
+                : Number(value);
+              if (Number.isNaN(numericValue)) {
+                return [value, "Wert"];
+              }
+              return [Math.round(numericValue), "Wert"];
+            }}
           />
           <Area 
             type="monotone" 

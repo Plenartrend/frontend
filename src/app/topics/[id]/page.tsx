@@ -90,13 +90,13 @@ export default function TopicDetail() {
         <div className="lg:col-span-2 space-y-8">
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-             <div className="rounded-lg bg-white p-6 shadow border border-slate-100">
+            <div className="rounded-lg bg-white p-6 shadow border border-slate-100">
               <h2 className="text-lg font-bold text-slate-900 mb-4">Relevanz über Zeit</h2>
-              <TrendChart data={trendData} yAxisLabel="Erwähnungen" />
+              <TrendChart data={trendData} yAxisLabel="Erwähnungen" interactive={false} />
             </div>
             <div className="rounded-lg bg-white p-6 shadow border border-slate-100">
               <h2 className="text-lg font-bold text-slate-900 mb-4">Position über Zeit</h2>
-               <TrendChart data={positionData} color="#10b981" yAxisLabel="Stimmung (Neg-Pos)" />
+               <TrendChart data={positionData} color="#10b981" yAxisLabel="Stimmung (Neg-Pos)" interactive={false} />
             </div>
           </div>
 
