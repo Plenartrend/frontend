@@ -2,26 +2,17 @@
 
 import { Search, User, X, TrendingUp, TrendingDown, Minus, Loader2, ChevronDown, ChevronUp } from "lucide-react";
 import Link from "next/link";
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo } from "react";
+import { useInfiniteScroll } from "@/hooks/useInfiniteScroll";
 
 export default function ExplorerPoliticiansPage() {
-  const [politicians, setPoliticians] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [expandedParties, setExpandedParties] = useState<Record<string, boolean>>({});
 
-  useEffect(() => {
-    fetch('/api/v1/politicians')
-      .then(res => res.json())
-      .then(data => {
-        setPoliticians(data);
-        setLoading(false);
-      })
-      .catch(err => {
-        console.error("Failed to fetch politicians", err);
-        setLoading(false);
-      });
-  }, []);
+  const { data: politicians, loading, loadingMore, hasMore, loadMoreRef } = useInfiniteScroll<any>({
+    fetchUrl: "/api/v1/politicians",
+    pageSize: 20,
+  });
 
   const filteredPoliticians = useMemo(() => {
     return politicians.filter(p => {
@@ -117,7 +108,7 @@ export default function ExplorerPoliticiansPage() {
           const allItems = groupedPoliticians[party];
           const isExpanded = expandedParties[party];
           const displayedItems = isExpanded ? allItems : allItems.slice(0, 6);
-          const hasMore = allItems.length > 6;
+          const hasMoreInParty = allItems.length > 6;
 
           return (
             <div key={party}>
@@ -129,8 +120,8 @@ export default function ExplorerPoliticiansPage() {
               </div>
 
               <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-                {displayedItems.map((politician: any) => (
-                  <Link key={politician.id} href={`/politicians/${politician.id}`} className="group">
+                {displayedItems.map((politician: any, index: number) => (
+                  <Link key={`${politician.id}-${party}-${index}`} href={`/politicians/${politician.id}`} className="group">
                     <div className="flex flex-col h-full overflow-hidden rounded-lg bg-white shadow transition-all duration-200 hover:shadow-lg hover:-translate-y-1 border border-slate-100 ring-1 ring-slate-200 hover:ring-blue-500/50">
                       <div className="p-5 flex-1">
                          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4 sm:gap-0">
@@ -185,7 +176,7 @@ export default function ExplorerPoliticiansPage() {
                 ))}
               </div>
 
-              {hasMore && (
+              {hasMoreInParty && (
                 <div className="mt-4 flex justify-center">
                   <button
                     onClick={() => togglePartyExpansion(party)}
@@ -207,6 +198,19 @@ export default function ExplorerPoliticiansPage() {
           );
         })}
       </div>
+
+      {/* Infinite scroll trigger */}
+      {hasMore && !searchQuery && (
+        <div ref={loadMoreRef} className="flex justify-center py-8">
+          {loadingMore && <Loader2 className="h-8 w-8 animate-spin text-blue-600" />}
+        </div>
+      )}
+
+      {!loading && !hasMore && politicians.length > 0 && !searchQuery && (
+        <div className="text-center py-8 text-sm text-slate-500">
+          Alle Abgeordnete geladen
+        </div>
+      )}
     </div>
   );
 }

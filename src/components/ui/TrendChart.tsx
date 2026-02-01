@@ -48,13 +48,26 @@ export function TrendChart({ data, color = "#2563eb", yAxisLabel, interactive = 
             tickLine={false} 
             tick={{ fill: '#64748b', fontSize: 12 }} 
             minTickGap={30}
+            tickFormatter={(dateStr: string) => {
+              try {
+                const date = new Date(dateStr);
+                const month = date.toLocaleDateString('de-DE', { month: 'short' });
+                const year = date.getFullYear();
+                return `${month} ${year}`;
+              } catch {
+                return dateStr;
+              }
+            }}
           />
           <YAxis 
             axisLine={false} 
             tickLine={false} 
             tick={{ fill: '#64748b', fontSize: 12 }} 
-            allowDecimals={false}
-            tickFormatter={(value: number) => Math.round(value).toString()}
+            allowDecimals={true}
+            tickFormatter={(value: number) => {
+              // Format to max 2 decimal places, remove trailing zeros
+              return Number(value.toFixed(2)).toString();
+            }}
             label={yAxisLabel ? { 
               value: yAxisLabel, 
               angle: -90, 

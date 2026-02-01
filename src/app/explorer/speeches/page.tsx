@@ -3,26 +3,25 @@
 import { Mic, Calendar, User, FileText, Loader2, Search, X } from "lucide-react";
 import Link from "next/link";
 import { useState, useEffect } from "react";
+import { useInfiniteScroll } from "@/hooks/useInfiniteScroll";
 
 export default function ExplorerSpeechesPage() {
-  const [speeches, setSpeeches] = useState<any[]>([]);
   const [politicians, setPoliticians] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
 
+  const { data: speeches, loading, loadingMore, hasMore, loadMoreRef } = useInfiniteScroll<any>({
+    fetchUrl: "/api/v1/speeches",
+    pageSize: 20,
+  });
+
   useEffect(() => {
-    Promise.all([
-      fetch('/api/v1/speeches').then(res => res.json()),
-      fetch('/api/v1/politicians').then(res => res.json())
-    ]).then(([speechesData, polsData]) => {
-        const sorted = speechesData.sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime());
-        setSpeeches(sorted);
-        setPoliticians(polsData);
-        setLoading(false);
+    fetch('/api/v1/politicians?offset=0&page_size=1000')
+      .then(res => res.json())
+      .then(data => {
+        setPoliticians(data.data || data);
       })
       .catch(err => {
-        console.error("Failed to fetch data", err);
-        setLoading(false);
+        console.error("Failed to fetch politicians", err);
       });
   }, []);
 
@@ -31,10 +30,14 @@ export default function ExplorerSpeechesPage() {
     return p ? `${p.name} (${p.party})` : 'Unbekannt';
   };
 
-  const filteredSpeeches = speeches.filter(s => 
-    s.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    s.type.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    s.session.toLowerCase().includes(searchQuery.toLowerCase()) ||
+  const sortedSpeeches = speeches.sort((a: any, b: any) => 
+    new Date(b.date).getTime() - new Date(a.date).getTime()
+  );
+
+  const filteredSpeeches = sortedSpeeches.filter(s => 
+    s.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    s.type?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    s.session?.toLowerCase().includes(searchQuery.toLowerCase()) ||
     getSpeakerName(s.speakerId).toLowerCase().includes(searchQuery.toLowerCase())
   );
 
@@ -89,8 +92,8 @@ export default function ExplorerSpeechesPage() {
       </div>
 
       <div className="grid grid-cols-1 gap-6">
-        {filteredSpeeches.map((speech) => (
-          <Link key={speech.id} href={`/speeches/${speech.id}`} className="block group">
+        {filteredSpeeches.map((speech, index) => (
+          <Link key={`${speech.id}-${index}`} href={`/speeches/${speech.id}`} className="block group">
             <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-6 hover:border-blue-300 hover:shadow-md transition-all">
               <div className="flex justify-between items-start mb-4">
                 <div>
@@ -123,6 +126,19 @@ export default function ExplorerSpeechesPage() {
           </Link>
         ))}
       </div>
+
+      {/* Infinite scroll trigger */}
+      {hasMore && !searchQuery && (
+        <div ref={loadMoreRef} className="flex justify-center py-8">
+          {loadingMore && <Loader2 className="h-8 w-8 animate-spin text-blue-600" />}
+        </div>
+      )}
+
+      {!loading && !hasMore && filteredSpeeches.length > 0 && !searchQuery && (
+        <div className="text-center py-8 text-sm text-slate-500">
+          Alle Reden geladen
+        </div>
+      )}
     </div>
   );
 }

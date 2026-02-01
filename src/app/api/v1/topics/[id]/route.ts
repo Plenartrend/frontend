@@ -1,42 +1,38 @@
 import { NextResponse } from 'next/server';
-import { TOPICS, LEGISLATION, SPEECHES, TREND_DATA, PARTY_POSITIONS, POLITICIANS } from '@/lib/mockData';
-import { Topic, TopicDetail } from '@/types';
+
+const CRUD_API_URL = process.env.CRUD_API_URL ?? 'http://localhost:8080';
 
 export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const topic = TOPICS.find(t => t.id === id);
 
-  if (!topic) {
-    return new NextResponse('Not Found', { status: 404 });
+  try {
+    const res = await fetch(
+      `${CRUD_API_URL}/topics/${id}`,
+      { next: { revalidate: 60 } } // Cache for 1 minute
+    );
+    
+    if (!res.ok) {
+      if (res.status === 404) {
+        return NextResponse.json(
+          { error: 'Topic not found' },
+          { status: 404 }
+        );
+      }
+      const text = await res.text();
+      console.error('CRUD topic detail error', res.status, text);
+      return NextResponse.json(
+        { error: 'Failed to fetch topic from backend' },
+        { status: res.status }
+      );
+    }
+    
+    const body = await res.json();
+    return NextResponse.json(body);
+  } catch (err) {
+    console.error('Failed to fetch topic', err);
+    return NextResponse.json(
+      { error: 'Failed to fetch topic' },
+      { status: 502 }
+    );
   }
-
-  const topicLegislation = LEGISLATION.filter(l => l.topicId === id);
-  const topicSpeeches = SPEECHES.filter(s => s.topicId === id);
-  
-  const topicTrendData = TREND_DATA.map(d => ({
-    ...d,
-    value: d.value + (topic.relevance / 2) * (Math.random() * 0.5 + 0.8)
-  }));
-
-  const positionTrendData = TREND_DATA.map(d => ({
-     date: d.date,
-     value: Math.sin(d.value) * 50 + 50 
-  }));
-
-  const stakeholders = {
-    pro: POLITICIANS.slice(0, 2), 
-    contra: POLITICIANS.slice(2, 4)
-  };
-
-  const response: TopicDetail = {
-    ...topic,
-    legislation: topicLegislation,
-    speeches: topicSpeeches,
-    trendData: topicTrendData,
-    positionData: positionTrendData,
-    partyPositions: PARTY_POSITIONS,
-    stakeholders
-  };
-
-  return NextResponse.json(response);
 }

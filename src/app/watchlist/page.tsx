@@ -92,7 +92,7 @@ export default function WatchlistPage() {
                     <div className={cn("h-2 w-2 rounded-full", topic.trend === 'up' ? "bg-green-500" : topic.trend === 'down' ? "bg-red-500" : "bg-slate-300")} />
                   </div>
                   <div className="mt-4 pt-3 border-t border-slate-100 flex justify-between items-center text-xs text-slate-500">
-                    <span>Relevanz: {topic.relevance}</span>
+                    <span>Relevanz: {topic.relevance != null ? Math.round(topic.relevance * 100) : "–"}</span>
                     <span>{topic.trend === 'up' ? '↗ Steigend' : '↘ Fallend'}</span>
                   </div>
                 </div>

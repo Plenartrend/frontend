@@ -3,14 +3,6 @@ export interface TrendDataPoint {
   value: number;
 }
 
-export interface Legislation {
-  id: string;
-  topicId: string;
-  title: string;
-  status: string;
-  date: string;
-}
-
 export interface SpeechSnippet {
   id: string;
   topicId: string;
@@ -57,15 +49,13 @@ export interface Topic {
 }
 
 export interface TopicDetail extends Topic {
-  legislation: Legislation[];
   speeches: SpeechSnippet[];
-  trendData: TrendDataPoint[];
-  positionData: TrendDataPoint[];
   partyPositions: PartyPosition[];
   stakeholders: {
     pro: Politician[];
     contra: Politician[];
   };
+  // Note: trendData and positionData fetched separately from /analysis/time-series
 }
 
 export interface FullSpeech {
