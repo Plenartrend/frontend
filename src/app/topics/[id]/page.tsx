@@ -78,7 +78,7 @@ export default function TopicDetail() {
         // Process time-series data - data should already be oldest-to-newest from backend
         const relevanceSeries = (timeSeries.series || []).map((point: any) => ({
           date: point.period,
-          value: (point.relevance || 0) * 100 // Scale 0-1 to 0-100
+          value: Math.min((point.relevance || 0) * 1000, 100) // Scale by 1000 but cap at 100
         }));
         
         const sentimentSeries = (timeSeries.series || []).map((point: any) => ({
