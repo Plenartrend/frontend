@@ -4,7 +4,6 @@ import {
   Campaign, 
   Notification, 
   TrendDataPoint, 
-  Legislation, 
   SpeechSnippet, 
   PartyPosition, 
   FullSpeech,
@@ -416,12 +415,6 @@ export const TREND_DATA: TrendDataPoint[] = [
   { date: 'Aug 25', value: 50 },
   { date: 'Sep 25', value: 65 },
   { date: 'Okt 25', value: 75 },
-];
-
-export const LEGISLATION: Legislation[] = [
-  { id: 'l1', topicId: 't1', title: 'Entwurf eines Gesetzes zur Änderung des Erneuerbare-Energien-Gesetzes', status: 'In Beratung', date: '2025-10-15' },
-  { id: 'l2', topicId: 't1', title: 'Antrag der CDU/CSU: Energieversorgung sichern', status: 'Abgelehnt', date: '2025-09-22' },
-  { id: 'l3', topicId: 't2', title: 'Digitalpakt 2.0', status: 'Verabschiedet', date: '2025-08-10' },
 ];
 
 export const SPEECHES: SpeechSnippet[] = [
