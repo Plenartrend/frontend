@@ -19,6 +19,8 @@ export default function TopicDetail() {
   const [expandedSpeeches, setExpandedSpeeches] = useState<Set<string>>(new Set());
   const [timeRange, setTimeRange] = useState<string>('last_6_months');
 
+  const [chartsLoading, setChartsLoading] = useState(true);
+
   const timeRangeOptions = [
     { value: 'last_6_months', label: 'Letzte 6 Monate' },
     { value: 'ytd', label: 'Jahr bis heute' },
@@ -43,44 +45,57 @@ export default function TopicDetail() {
   useEffect(() => {
     if (!id) return;
     
-    // Fetch topic details and trend data in parallel
-    Promise.all([
-      fetch(`/api/v1/topics/${id}`).then(res => {
+    // Fetch topic details immediately
+    fetch(`/api/v1/topics/${id}`)
+      .then(res => {
         if (!res.ok) throw new Error("Not found");
         return res.json();
-      }),
-      fetch(`/api/v1/analysis/time-series?time_range=${timeRange}&topic_id=${id}`).then(res => {
+      })
+      .then(topic => {
+        console.log('Topic data received:', topic);
+        setTopicData(topic);
+        setLoading(false);
+      })
+      .catch(() => {
+        setError(true);
+        setLoading(false);
+      });
+  }, [id]);
+
+  // Fetch time series data separately
+  useEffect(() => {
+    if (!id) return;
+    
+    setChartsLoading(true);
+    fetch(`/api/v1/analysis/time-series?time_range=${timeRange}&topic_id=${id}`)
+      .then(res => {
         if (!res.ok) throw new Error("Failed to fetch time-series");
         return res.json();
       })
-    ])
-    .then(([topic, timeSeries]) => {
-      console.log('Topic data received:', topic);
-      console.log('Time series received:', timeSeries);
-      setTopicData(topic);
-      
-      // Process time-series data - data should already be oldest-to-newest from backend
-      const relevanceSeries = (timeSeries.series || []).map((point: any) => ({
-        date: point.period,
-        value: (point.relevance || 0) * 100 // Scale 0-1 to 0-100
-      }));
-      
-      const sentimentSeries = (timeSeries.series || []).map((point: any) => ({
-        date: point.period,
-        value: (point.sentiment || 0) * 100 // Scale -1 to 1 → -100 to +100
-      }));
-      
-      console.log('Relevance series:', relevanceSeries);
-      console.log('Sentiment series:', sentimentSeries);
-      
-      setTrendData(relevanceSeries);
-      setPositionData(sentimentSeries);
-      setLoading(false);
-    })
-    .catch(() => {
-      setError(true);
-      setLoading(false);
-    });
+      .then(timeSeries => {
+        console.log('Time series received:', timeSeries);
+        
+        // Process time-series data - data should already be oldest-to-newest from backend
+        const relevanceSeries = (timeSeries.series || []).map((point: any) => ({
+          date: point.period,
+          value: (point.relevance || 0) * 100 // Scale 0-1 to 0-100
+        }));
+        
+        const sentimentSeries = (timeSeries.series || []).map((point: any) => ({
+          date: point.period,
+          value: (point.sentiment || 0) * 100 // Scale -1 to 1 → -100 to +100
+        }));
+        
+        console.log('Relevance series:', relevanceSeries);
+        console.log('Sentiment series:', sentimentSeries);
+        
+        setTrendData(relevanceSeries);
+        setPositionData(sentimentSeries);
+        setChartsLoading(false);
+      })
+      .catch(() => {
+        setChartsLoading(false);
+      });
   }, [id, timeRange]); // Re-fetch when timeRange changes
 
   if (loading) {
@@ -160,17 +175,29 @@ export default function TopicDetail() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="rounded-lg bg-white p-6 shadow border border-slate-100">
               <h3 className="text-lg font-semibold text-slate-900 mb-4">Relevanz über Zeit</h3>
-              <TrendChart data={trendData} yAxisLabel="Relevanz" interactive={false} />
+              {chartsLoading ? (
+                <div className="flex items-center justify-center h-64">
+                  <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+                </div>
+              ) : (
+                <TrendChart data={trendData} yAxisLabel="Relevanz" interactive={false} />
+              )}
             </div>
             <div className="rounded-lg bg-white p-6 shadow border border-slate-100">
               <h3 className="text-lg font-semibold text-slate-900 mb-4">Position über Zeit</h3>
-               <TrendChart 
-                 data={positionData} 
-                 yAxisLabel="Stimmung" 
-                 interactive={false} 
-                 useSentimentColors={true}
-                 yAxisDomain={[-100, 100]}
-               />
+              {chartsLoading ? (
+                <div className="flex items-center justify-center h-64">
+                  <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+                </div>
+              ) : (
+                <TrendChart 
+                  data={positionData} 
+                  yAxisLabel="Stimmung" 
+                  interactive={false} 
+                  useSentimentColors={true}
+                  yAxisDomain={[-100, 100]}
+                />
+              )}
             </div>
           </div>
 
@@ -195,7 +222,7 @@ export default function TopicDetail() {
                         style={{ left: `${(p.relevance ?? 0) * 100}%` }}
                       ></div>
                     </div>
-                     <div className="hidden sm:block w-10 text-right text-[11px] text-slate-500">{p.sentiment > 0 ? '+' : ''}{p.sentiment}</div>
+                     <div className="hidden sm:block w-10 text-right text-[11px] text-slate-500">{p.sentiment > 0 ? '+' : ''}{p.sentiment.toFixed(2)}</div>
                   </div>
                 ))
               ) : (
