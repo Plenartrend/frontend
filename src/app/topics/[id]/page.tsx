@@ -180,7 +180,7 @@ export default function TopicDetail() {
                   <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
                 </div>
               ) : (
-                <TrendChart data={trendData} yAxisLabel="Relevanz" interactive={false} />
+                <TrendChart data={trendData} yAxisLabel="Relevanz" interactive={false} yAxisDomain={[0, 100]} />
               )}
             </div>
             <div className="rounded-lg bg-white p-6 shadow border border-slate-100">
