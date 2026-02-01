@@ -1,13 +1,12 @@
 import { NextResponse } from 'next/server';
-
-const CRUD_API_URL = process.env.CRUD_API_URL ?? 'http://localhost:8080';
+import { API_BASE_URL } from '@/lib/config';
 
 export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
 
   try {
     const res = await fetch(
-      `${CRUD_API_URL}/topics/${id}`,
+      `${API_BASE_URL}/topics/${id}`,
       { next: { revalidate: 60 } } // Cache for 1 minute
     );
     

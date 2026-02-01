@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server';
-
-const CRUD_API_URL = process.env.CRUD_API_URL ?? 'http://localhost:8080';
+import { API_BASE_URL } from '@/lib/config';
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -19,7 +18,7 @@ export async function GET(request: Request) {
 
   try {
     const res = await fetch(
-      `${CRUD_API_URL}/analysis/time-series?${params.toString()}`,
+      `${API_BASE_URL}/analysis/time-series?${params.toString()}`,
       { next: { revalidate: 300 } } // Cache for 5 minutes
     );
     
