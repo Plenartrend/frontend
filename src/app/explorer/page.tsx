@@ -1,5 +1,5 @@
-import { redirect } from 'next/navigation';
+import { RedirectType, redirect } from 'next/navigation';
 
 export default function ExplorerRootPage() {
-  redirect('/explorer/topics');
+  redirect('/explorer/topics', RedirectType.replace);
 }

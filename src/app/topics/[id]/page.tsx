@@ -67,7 +67,7 @@ export default function TopicDetail() {
       
       const sentimentSeries = (timeSeries.series || []).map((point: any) => ({
         date: point.period,
-        value: ((point.sentiment || 0) + 1) * 50 // Scale -1-1 to 0-100
+        value: (point.sentiment || 0) * 100 // Scale -1 to 1 → -100 to +100
       }));
       
       console.log('Relevance series:', relevanceSeries);
@@ -164,7 +164,13 @@ export default function TopicDetail() {
             </div>
             <div className="rounded-lg bg-white p-6 shadow border border-slate-100">
               <h3 className="text-lg font-semibold text-slate-900 mb-4">Position über Zeit</h3>
-               <TrendChart data={positionData} color="#10b981" yAxisLabel="Stimmung (Neg-Pos)" interactive={false} />
+               <TrendChart 
+                 data={positionData} 
+                 yAxisLabel="Stimmung" 
+                 interactive={false} 
+                 useSentimentColors={true}
+                 yAxisDomain={[-100, 100]}
+               />
             </div>
           </div>
 

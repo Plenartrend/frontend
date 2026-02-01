@@ -1,6 +1,6 @@
 "use client";
 
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine } from 'recharts';
 import { useState, useEffect } from 'react';
 
 interface DataPoint {
@@ -13,9 +13,18 @@ interface TrendChartProps {
   color?: string;
   yAxisLabel?: string;
   interactive?: boolean;
+  useSentimentColors?: boolean; // Use green for positive, red for negative
+  yAxisDomain?: [number, number]; // Custom Y-axis domain
 }
 
-export function TrendChart({ data, color = "#2563eb", yAxisLabel, interactive = true }: TrendChartProps) {
+export function TrendChart({ 
+  data, 
+  color = "#2563eb", 
+  yAxisLabel, 
+  interactive = true,
+  useSentimentColors = false,
+  yAxisDomain
+}: TrendChartProps) {
   const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
@@ -24,6 +33,15 @@ export function TrendChart({ data, color = "#2563eb", yAxisLabel, interactive = 
     window.addEventListener('resize', checkMobile);
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
+
+  // Calculate if current trend is positive or negative (based on last value)
+  const lastValue = data.length > 0 ? data[data.length - 1].value : 0;
+  const isPositive = lastValue >= 0;
+  
+  // Use sentiment colors if enabled
+  const lineColor = useSentimentColors 
+    ? (isPositive ? '#10b981' : '#ef4444') // green-500 : red-500
+    : color;
 
   return (
     <div
@@ -64,6 +82,7 @@ export function TrendChart({ data, color = "#2563eb", yAxisLabel, interactive = 
             tickLine={false} 
             tick={{ fill: '#64748b', fontSize: 12 }} 
             allowDecimals={true}
+            domain={yAxisDomain || [0, 'auto']}
             tickFormatter={(value: number) => {
               // Format to max 2 decimal places, remove trailing zeros
               return Number(value.toFixed(2)).toString();
@@ -81,6 +100,10 @@ export function TrendChart({ data, color = "#2563eb", yAxisLabel, interactive = 
             } : undefined}
             width={isMobile ? 35 : 60}
           />
+          {/* Add zero reference line for sentiment charts */}
+          {useSentimentColors && (
+            <ReferenceLine y={0} stroke="#94a3b8" strokeDasharray="3 3" />
+          )}
           <Tooltip 
             contentStyle={{ backgroundColor: '#fff', borderRadius: '8px', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
             itemStyle={{ color: '#0f172a' }}
@@ -99,8 +122,8 @@ export function TrendChart({ data, color = "#2563eb", yAxisLabel, interactive = 
           <Area 
             type="monotone" 
             dataKey="value" 
-            stroke={color} 
-            fill={color} 
+            stroke={lineColor} 
+            fill={lineColor} 
             fillOpacity={0.1} 
             strokeWidth={2} 
             activeDot={{ r: 6, strokeWidth: 0 }}
