@@ -119,12 +119,24 @@ export default function PoliticianDetail() {
            </div>
         </div>
         <div className="bg-white p-6 rounded-lg shadow border border-slate-100 flex items-center gap-4">
-           <div className="p-3 bg-green-50 rounded-lg text-green-600">
+           <div className={`p-3 rounded-lg ${
+             politician.contributionFactor === 'high' ? 'bg-green-50 text-green-600' :
+             politician.contributionFactor === 'medium' ? 'bg-yellow-50 text-yellow-600' :
+             'bg-red-50 text-red-600'
+           }`}>
              <Award className="h-6 w-6" />
            </div>
            <div>
              <p className="text-sm text-slate-500 font-medium">Beitragsfaktor</p>
-             <p className="text-2xl font-bold text-slate-900">{politician.contributionFactor}/10</p>
+             <p className={`text-2xl font-bold ${
+               politician.contributionFactor === 'high' ? 'text-green-600' :
+               politician.contributionFactor === 'medium' ? 'text-yellow-600' :
+               'text-red-600'
+             }`}>
+               {politician.contributionFactor === 'high' ? 'Hoch' : 
+                politician.contributionFactor === 'medium' ? 'Mittel' : 
+                'Niedrig'}
+             </p>
            </div>
         </div>
         <div className="bg-white p-6 rounded-lg shadow border border-slate-100 flex items-center gap-4">
