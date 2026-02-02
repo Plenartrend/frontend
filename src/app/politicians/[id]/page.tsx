@@ -3,64 +3,166 @@
 import { TrendChart } from "@/components/ui/TrendChart";
 import { ChevronRight, Share2, Activity, Award, BarChart3, Users, Mic, Calendar, Loader2 } from "lucide-react";
 import Link from "next/link";
-import { useParams } from "next/navigation";
+import { useParams, useSearchParams, useRouter } from "next/navigation";
 import { WatchButton } from "@/components/ui/WatchButton";
 import { useEffect, useState, useRef } from "react";
 import { BackButton } from "@/components/ui/BackButton";
-import { POLITICIANS, SPEECHES } from "@/lib/mockData";
 import { useWatchlist } from "@/context/WatchlistContext";
 
 export default function PoliticianDetail() {
   const params = useParams();
+  const searchParams = useSearchParams();
+  const router = useRouter();
   const id = params?.id as string;
   const { updateBookmarkStats, isPoliticianWatched } = useWatchlist();
   const [politicianData, setPoliticianData] = useState<any>(null);
   const [similarPoliticians, setSimilarPoliticians] = useState<any[]>([]);
+  const [activityData, setActivityData] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const hasUpdatedVisit = useRef(false);
+  const [loadingSimilar, setLoadingSimilar] = useState(true);
+  const [loadingActivity, setLoadingActivity] = useState(true);
+  const [expandedSpeeches, setExpandedSpeeches] = useState<Set<string>>(new Set());
+  const [electionPeriods, setElectionPeriods] = useState<any[]>([]);
+  const [selectedPeriod, setSelectedPeriod] = useState<number | null>(null);
+  const [loadingPeriods, setLoadingPeriods] = useState(true);
+  const [timeRange, setTimeRange] = useState<string>('last_year');
+  const [copied, setCopied] = useState(false);
+    const hasUpdatedVisit = useRef(false);
+
+    useEffect(() => {
+        if (id && politicianData && !hasUpdatedVisit.current && isPoliticianWatched(id)) {
+            updateBookmarkStats(id, 'politician', {
+                name: politicianData.name,
+                party: politicianData.party,
+                volatility: politicianData.volatility,
+                contributionFactor: politicianData.contributionFactor,
+                numSpeeches: politicianData.numSpeeches || politicianData.speeches?.length || 0,
+            });
+            hasUpdatedVisit.current = true;
+        }
+    }, [id, politicianData, isPoliticianWatched, updateBookmarkStats]);
+
+  const timeRangeOptions = [
+    { value: 'last_6_months', label: 'Letzte 6 Monate' },
+    { value: 'ytd', label: 'Jahr bis heute' },
+    { value: 'last_year', label: 'Letztes Jahr' },
+    { value: 'last_2_years', label: 'Letzte 2 Jahre' },
+    { value: 'last_5_years', label: 'Letzte 5 Jahre' },
+    { value: 'max', label: 'Alle Daten' },
+  ];
+
+  const toggleSpeech = (speechId: string) => {
+    setExpandedSpeeches(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(speechId)) {
+        newSet.delete(speechId);
+      } else {
+        newSet.add(speechId);
+      }
+      return newSet;
+    });
+  };
+
+  // Fetch election periods
+  useEffect(() => {
+    fetch('/api/v1/election-periods')
+      .then(res => res.json())
+      .then(data => {
+        if (Array.isArray(data)) {
+          const filtered = data.filter(p => p.number > 0);
+          setElectionPeriods(filtered);
+
+          // Check for election_period in URL params
+          const urlPeriod = searchParams.get('election_period');
+          if (urlPeriod) {
+            const periodNum = parseInt(urlPeriod);
+            if (filtered.some(p => p.number === periodNum)) {
+              setSelectedPeriod(periodNum);
+            } else if (filtered.length > 0) {
+              setSelectedPeriod(filtered[0].number);
+            }
+          } else if (filtered.length > 0) {
+            setSelectedPeriod(filtered[0].number);
+          }
+        } else {
+          setElectionPeriods([]);
+        }
+        setLoadingPeriods(false);
+      })
+      .catch(err => {
+        console.error('Failed to fetch election periods', err);
+        setElectionPeriods([]);
+        setLoadingPeriods(false);
+      });
+  }, [searchParams]);
 
   useEffect(() => {
-    if (id && politicianData && !hasUpdatedVisit.current && isPoliticianWatched(id)) {
-      updateBookmarkStats(id, 'politician', {
-        name: politicianData.name,
-        party: politicianData.party,
-        volatility: politicianData.volatility,
-        contributionFactor: politicianData.contributionFactor,
-        numSpeeches: politicianData.numSpeeches || politicianData.speeches?.length || 0,
-      });
-      hasUpdatedVisit.current = true;
-    }
-  }, [id, politicianData, isPoliticianWatched, updateBookmarkStats]);
+    if (!id || selectedPeriod === null) return;
 
+    setLoading(true);
+    setLoadingSimilar(true);
+
+    const queryParams = new URLSearchParams();
+    queryParams.set('election_period', selectedPeriod.toString());
+    queryParams.set('time_range', timeRange);
+
+    // Fetch main politician data
+    fetch(`/api/v1/politicians/${id}?${queryParams.toString()}`)
+      .then(res => {
+        if (!res.ok) {
+          throw new Error('Failed to fetch politician');
+        }
+        return res.json();
+      })
+      .then(data => {
+        setPoliticianData(data);
+        setLoading(false);
+      })
+      .catch(err => {
+        console.error('Failed to fetch politician:', err);
+        setLoading(false);
+      });
+
+    // Fetch similar politicians separately
+    const similarParams = new URLSearchParams();
+    similarParams.set('election_period', selectedPeriod.toString());
+
+    fetch(`/api/v1/politicians/${id}/similar?${similarParams.toString()}`)
+      .then(res => res.ok ? res.json() : [])
+      .then(data => {
+        setSimilarPoliticians(data || []);
+        setLoadingSimilar(false);
+      })
+      .catch(err => {
+        console.error('Failed to fetch similar politicians:', err);
+        setSimilarPoliticians([]);
+        setLoadingSimilar(false);
+      });
+  }, [id, selectedPeriod]);
+
+  // Separate effect for activity data that depends on timeRange
   useEffect(() => {
-    if (!id) return;
+    if (!id || selectedPeriod === null) return;
 
-    // Always show the first mock politician regardless of ID
-    setTimeout(() => {
-      const politician = POLITICIANS[0]; // Always use first mock politician
-      
-      // Generate deterministic activity data
-      const activityData = Array.from({ length: 12 }, (_, i) => ({
-        date: `2025-${String(i + 1).padStart(2, '0')}`,
-        value: 60 + (i * 7) % 30
-      }));
+    setLoadingActivity(true);
 
-      // Get some mock speeches
-      const politicianSpeeches = SPEECHES.slice(0, 3);
+    const queryParams = new URLSearchParams();
+    queryParams.set('election_period', selectedPeriod.toString());
+    queryParams.set('time_range', timeRange);
 
-      setPoliticianData({
-        ...politician,
-        activityData,
-        speeches: politicianSpeeches,
-        numSpeeches: politicianSpeeches.length
+    // Fetch activity data separately
+    fetch(`/api/v1/politicians/${id}/activity?${queryParams.toString()}`)
+      .then(res => res.ok ? res.json() : [])
+      .then(data => {
+        setActivityData(data || []);
+        setLoadingActivity(false);
+      })
+      .catch(err => {
+        console.error('Failed to fetch activity data:', err);
+        setActivityData([]);
+        setLoadingActivity(false);
       });
-
-      // Get similar politicians
-      setSimilarPoliticians(POLITICIANS.slice(1, 4));
-      
-      setLoading(false);
-    }, 300);
-  }, [id]);
+  }, [id, selectedPeriod, timeRange]);
 
   if (loading) {
     return (
@@ -74,7 +176,7 @@ export default function PoliticianDetail() {
     return (
       <div className="text-center py-20">
         <h2 className="text-xl font-bold text-slate-900">Abgeordneter nicht gefunden</h2>
-        <p className="text-slate-500 mt-2">Dieser Abgeordnete existiert nicht in den Mock-Daten.</p>
+        <p className="text-slate-500 mt-2">Dieser Abgeordnete existiert nicht.</p>
         <div className="mt-6">
           <BackButton />
         </div>
@@ -82,7 +184,7 @@ export default function PoliticianDetail() {
     );
   }
 
-  const { speeches: politicianSpeeches, activityData, ...politician } = politicianData;
+  const { speeches: politicianSpeeches, ...politician } = politicianData;
 
   return (
     <div className="space-y-8">
@@ -92,11 +194,46 @@ export default function PoliticianDetail() {
         <span className="font-medium text-slate-900">{politician.name}</span>
       </nav>
 
-      <div className="bg-white rounded-xl shadow border border-slate-200 p-6 md:p-8 flex flex-col md:flex-row gap-8 items-start relative">
+      {/* Election Period Selector */}
+      <div className="flex justify-start">
+        <select
+          id="period-select"
+          value={selectedPeriod || ''}
+          onChange={(e) => {
+            const newPeriod = Number(e.target.value);
+            setSelectedPeriod(newPeriod);
+            // Update URL with new election period
+            const newUrl = new URL(window.location.href);
+            newUrl.searchParams.set('election_period', newPeriod.toString());
+            router.push(newUrl.pathname + newUrl.search);
+          }}
+          disabled={loadingPeriods}
+          className="rounded-md border-0 py-2 px-3 text-slate-900 ring-1 ring-inset ring-slate-300 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:text-sm bg-white shadow-sm"
+        >
+          {loadingPeriods ? (
+            <option>Laden...</option>
+          ) : (
+            electionPeriods.map(period => (
+              <option key={period.number} value={period.number}>
+                {period.number}. Wahlperiode
+              </option>
+            ))
+          )}
+        </select>
+      </div>
+
+      <div className="bg-white rounded-xl shadow border border-slate-200 p-6 md:p-8 flex flex-col md:flex-row gap-8 items-center relative">
         <div className="absolute top-6 right-6 flex flex-col-reverse gap-2 md:flex-row">
-          <button className="inline-flex items-center gap-2 rounded-md bg-white px-3 py-2 text-sm font-semibold text-slate-700 shadow-sm ring-1 ring-inset ring-slate-300 hover:bg-slate-50">
+          <button
+            onClick={() => {
+              navigator.clipboard.writeText(window.location.href);
+              setCopied(true);
+              setTimeout(() => setCopied(false), 2000);
+            }}
+            className="inline-flex items-center gap-2 rounded-md bg-white px-3 py-2 text-sm font-semibold text-slate-700 shadow-sm ring-1 ring-inset ring-slate-300 hover:bg-slate-50"
+          >
             <Share2 className="h-4 w-4" />
-            <span>Profil Teilen</span>
+            <span>{copied ? 'Kopiert!' : 'Profil Teilen'}</span>
           </button>
           <WatchButton
             id={id}
@@ -114,7 +251,7 @@ export default function PoliticianDetail() {
 
         <div className="flex-shrink-0">
           <div className="h-32 w-32 rounded-full bg-slate-200 flex items-center justify-center text-4xl font-bold text-slate-400 border-4 border-white shadow-sm">
-             {politician.name.split(' ').map((n: string) => n[0]).join('')}
+             {politician.name.split(',')[0].split(' ').map((n: string) => n[0]).join('')}
           </div>
         </div>
         <div className="flex-1 w-full">
@@ -125,10 +262,14 @@ export default function PoliticianDetail() {
                  
                  <div className="contents md:flex md:items-center md:gap-2 md:mt-2 md:text-lg md:text-slate-600">
                    <span className="font-semibold text-lg text-slate-600">{politician.party}</span>
-                   <span className="hidden md:inline text-slate-600">•</span>
-                   <span className="block w-full md:inline md:w-auto text-lg text-slate-600 mt-1 md:mt-0">
-                     {politician.role} ({politician.region})
-                   </span>
+                   {politician.role && (
+                     <>
+                       <span className="hidden md:inline text-slate-600">•</span>
+                       <span className="block w-full md:inline md:w-auto text-lg text-slate-600 mt-1 md:mt-0">
+                         {politician.role}
+                       </span>
+                     </>
+                   )}
                  </div>
                </div>
             </div>
@@ -172,8 +313,8 @@ export default function PoliticianDetail() {
              <BarChart3 className="h-6 w-6" />
            </div>
            <div>
-             <p className="text-sm text-slate-500 font-medium">Reden (2025)</p>
-             <p className="text-2xl font-bold text-slate-900">{politicianSpeeches.length || 14}</p>
+             <p className="text-sm text-slate-500 font-medium">Reden</p>
+             <p className="text-2xl font-bold text-slate-900">{politician.numSpeeches || politicianSpeeches?.length || 0}</p>
            </div>
         </div>
       </div>
@@ -187,27 +328,103 @@ export default function PoliticianDetail() {
                     <div key={idx} className="border border-slate-200 rounded-lg p-4 hover:border-blue-300 transition-colors cursor-pointer">
                       <div className="flex justify-between items-start">
                         <h3 className="font-semibold text-slate-900">{item.topic}</h3>
-                        <span className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full">Top {idx + 1}</span>
+                        {item.speechCount && (
+                          <span className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full">
+                            {item.speechCount} {item.speechCount === 1 ? 'Rede' : 'Reden'}
+                          </span>
+                        )}
                       </div>
-                      <div className="mt-3 h-2 bg-slate-100 rounded-full overflow-hidden">
-                        <div className="h-full bg-blue-600" style={{ width: `${90 - (idx * 20)}%` }}></div>
-                      </div>
-                      <div className="mt-2 flex justify-between items-center text-xs">
-                         <span className="text-slate-500">Hohe Aktivität</span>
-                         <span className={`font-semibold ${item.stance?.includes('dagegen') || item.stance?.includes('Kritisch') ? 'text-red-600' : 'text-green-600'}`}>
-                           {item.stance}
-                         </span>
-                      </div>
+                      {item.sentiment !== undefined && item.sentiment !== null ? (
+                        <>
+                          <div className="mt-3 h-2 bg-slate-100 rounded-full overflow-hidden">
+                            <div
+                              className={`h-full ${item.sentiment >= 0 ? 'bg-green-500' : 'bg-red-500'}`}
+                              style={{ width: `${Math.abs(item.sentiment) * 100}%` }}
+                            ></div>
+                          </div>
+                          <div className="mt-2 flex justify-between items-center text-xs">
+                             <span className="text-slate-500">Sentiment</span>
+                             <span className={`font-semibold ${item.sentiment >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                               {(item.sentiment * 100).toFixed(0)}
+                             </span>
+                          </div>
+                        </>
+                      ) : (
+                        <div className="mt-3 text-xs text-slate-400">Keine Sentimentdaten verfügbar</div>
+                      )}
                     </div>
                   ))}
                </div>
             </div>
 
             <div className="bg-white p-6 rounded-lg shadow border border-slate-100">
-               <h2 className="text-lg font-bold text-slate-900 mb-4">Aktivitätstrend über Zeit</h2>
-               <TrendChart data={activityData} yAxisLabel="Aktivitätsindex" interactive={false} />
-               <p className="text-xs text-slate-400 mt-2 text-center">Kombinierte Metrik aus Reden, Anfragen und Abstimmungen.</p>
+               <div className="flex justify-between items-center mb-4">
+                 <h2 className="text-lg font-bold text-slate-900">Aktivitätstrend über Zeit</h2>
+                 <select
+                   value={timeRange}
+                   onChange={(e) => setTimeRange(e.target.value)}
+                   className="text-sm border border-slate-300 rounded-md px-3 py-2 bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                 >
+                   {timeRangeOptions.map(option => (
+                     <option key={option.value} value={option.value}>{option.label}</option>
+                   ))}
+                 </select>
+               </div>
+               {loadingActivity ? (
+                 <div className="flex justify-center items-center h-64">
+                   <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                 </div>
+               ) : (
+                 <>
+                   <TrendChart data={activityData} yAxisLabel="Aktivitätsindex" interactive={false} />
+                   <p className="text-xs text-slate-400 mt-2 text-center">Kombinierte Metrik aus Reden, Anfragen und Abstimmungen.</p>
+                 </>
+               )}
             </div>
+
+             {/* Speeches Section */}
+             <div className="bg-white p-6 rounded-lg shadow border border-slate-100">
+                <h2 className="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2">
+                  <Mic className="h-5 w-5 text-slate-500" />
+                  Ausschnitte aus Reden
+                </h2>
+                {politicianSpeeches && politicianSpeeches.length > 0 ? (
+                  <ul className="space-y-4">
+                    {politicianSpeeches.map((speech: any) => {
+                      const fullText = speech.text || '';
+                      const isExpanded = expandedSpeeches.has(speech.id);
+                      const truncatedText = fullText.length > 400
+                        ? fullText.substring(0, 400).trim() + '...'
+                        : fullText;
+                      const isTruncated = fullText.length > 400;
+
+                      return (
+                        <li key={speech.id} className="bg-slate-50 p-4 rounded-lg relative hover:bg-slate-100 transition-colors">
+                          <p className="text-sm text-slate-700">
+                            "{isExpanded ? fullText : truncatedText}"
+                          </p>
+                          <div className="mt-2 flex items-center justify-between text-xs">
+                            <span className="font-semibold text-slate-900">{speech.speaker || politician.name}</span>
+                            <div className="flex items-center gap-2 text-slate-500">
+                              <span>{new Date(speech.date).toLocaleDateString('de-DE')}</span>
+                            </div>
+                          </div>
+                          {isTruncated && (
+                            <button
+                              onClick={() => toggleSpeech(speech.id)}
+                              className="mt-2 text-xs text-blue-600 hover:text-blue-800 hover:underline"
+                            >
+                              {isExpanded ? 'Weniger anzeigen' : 'Vollständigen Ausschnitt anzeigen'}
+                            </button>
+                          )}
+                        </li>
+                      );
+                    })}
+                  </ul>
+                ) : (
+                  <p className="text-sm text-slate-500">Keine aktuellen Reden gefunden.</p>
+                )}
+             </div>
          </div>
 
          <div className="space-y-8">
@@ -226,56 +443,27 @@ export default function PoliticianDetail() {
                </div>
             </div>
 
-            <div className="bg-white p-6 rounded-lg shadow border border-slate-100">
-               <h2 className="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2">
-                 <Mic className="h-5 w-5 text-slate-500" />
-                 Kürzlichste Reden
-               </h2>
-               {politicianSpeeches.length > 0 ? (
-                 <ul className="divide-y divide-slate-100">
-                   {politicianSpeeches.map((speech: any) => (
-                     <li key={speech.id} className="py-4 hover:bg-slate-50 -mx-4 px-4 transition-colors">
-                       <Link href={`/speeches/${speech.id}`}>
-                         <div className="flex justify-between items-start">
-                           <div>
-                             <h3 className="text-sm font-semibold text-slate-900 hover:text-blue-600 transition-colors line-clamp-2">{speech.title}</h3>
-                             <p className="text-xs text-slate-500 mt-1">{speech.type}</p>
-                           </div>
-                           <span className="text-xs text-slate-400 flex items-center gap-1 whitespace-nowrap ml-2">
-                             <Calendar className="h-3 w-3" />
-                             {new Date(speech.date).toLocaleDateString('de-DE')}
-                           </span>
-                         </div>
-                       </Link>
-                     </li>
-                   ))}
-                 </ul>
-               ) : (
-                 <p className="text-sm text-slate-500">Keine aktuellen Reden gefunden.</p>
-               )}
-            </div>
 
-            <div className="bg-white p-6 rounded-lg shadow border border-slate-100">
-               <h2 className="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2">
-                 <Users className="h-5 w-5 text-slate-500" />
-                 Ähnliche Abgeordnete
-               </h2>
-               <ul className="space-y-4">
-                  {similarPoliticians.length > 0 ? similarPoliticians.map((sim: any) => (
-                    <li key={sim.id} className="flex items-center gap-3 p-2 hover:bg-slate-50 rounded-md transition-colors">
-                       <div className="h-10 w-10 rounded-full bg-slate-200 flex items-center justify-center font-bold text-slate-500">
-                         {sim.name.split(' ').map((n: string) => n[0]).join('')}
-                       </div>
-                       <div className="flex-1">
-                          <Link href={`/politicians/${sim.id}`} className="font-medium text-slate-900 hover:text-blue-600 block">{sim.name}</Link>
-                          <p className="text-xs text-slate-500">{sim.party} • {sim.region}</p>
-                       </div>
-                       <div className="text-xs font-semibold text-green-600 bg-green-50 px-2 py-1 rounded">95%</div>
-                    </li>
-                  )) : (
-                    <p className="text-sm text-slate-500">Keine ähnlichen Profile gefunden.</p>
-                  )}
-               </ul>
+             <div className="bg-white p-6 rounded-lg shadow border border-slate-100">
+                <h2 className="text-lg font-bold text-slate-900 mb-4">Ähnliche Abgeordnete</h2>
+                <p className="text-sm text-slate-500 mb-4">Abgeordnete mit ähnlicher Haltung zu den Herzensthemen</p>
+
+               {loadingSimilar ? (
+                 <div className="flex justify-center items-center h-24">
+                   <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
+                 </div>
+               ) : similarPoliticians.length > 0 ? (
+                  <ul className="space-y-2">
+                     {similarPoliticians.map((sim: any) => (
+                       <li key={sim.id} className="flex items-center gap-2 text-sm">
+                         <div className="w-6 h-6 bg-slate-200 rounded-full flex items-center justify-center text-xs">{sim.name?.[0] || '?'}</div>
+                         <Link href={`/politicians/${sim.id}?election_period=${selectedPeriod}`} className="hover:underline hover:text-blue-600">{sim.name} ({sim.party})</Link>
+                       </li>
+                     ))}
+                  </ul>
+               ) : (
+                  <p className="text-slate-500 text-sm">Keine ähnlichen Profile gefunden.</p>
+               )}
             </div>
          </div>
       </div>

@@ -21,6 +21,7 @@ export default function TopicDetail() {
   const [expandedSpeeches, setExpandedSpeeches] = useState<Set<string>>(new Set());
   const [timeRange, setTimeRange] = useState<string>('last_6_months');
   const hasUpdatedVisit = useRef(false);
+  const [copied, setCopied] = useState(false);
 
   const [chartsLoading, setChartsLoading] = useState(true);
 
@@ -162,9 +163,16 @@ export default function TopicDetail() {
           </p>
         </div>
         <div className="flex gap-2">
-          <button className="inline-flex items-center gap-2 rounded-md bg-white px-3 py-2 text-sm font-semibold text-slate-700 shadow-sm ring-1 ring-inset ring-slate-300 hover:bg-slate-50">
+          <button
+            onClick={() => {
+              navigator.clipboard.writeText(window.location.href);
+              setCopied(true);
+              setTimeout(() => setCopied(false), 2000);
+            }}
+            className="inline-flex items-center gap-2 rounded-md bg-white px-3 py-2 text-sm font-semibold text-slate-700 shadow-sm ring-1 ring-inset ring-slate-300 hover:bg-slate-50"
+          >
             <Share2 className="h-4 w-4" />
-            Teilen
+            {copied ? 'Kopiert!' : 'Teilen'}
           </button>
           <WatchButton
             id={id}

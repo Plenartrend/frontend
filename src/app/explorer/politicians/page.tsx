@@ -483,7 +483,7 @@ export default function ExplorerPoliticiansPage() {
 
           <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
         {displayedPoliticians.map((politician: any) => (
-          <Link key={politician.id} href={`/politicians/${politician.id}`} className="group">
+          <Link key={politician.id} href={`/politicians/${politician.id}?election_period=${selectedPeriod}`} className="group">
             <div className="flex flex-col h-full overflow-hidden rounded-lg bg-white shadow transition-all duration-200 hover:shadow-lg hover:-translate-y-1 border border-slate-100 ring-1 ring-slate-200 hover:ring-blue-500/50">
               <div className="p-5 flex-1">
                 <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4 sm:gap-0">
