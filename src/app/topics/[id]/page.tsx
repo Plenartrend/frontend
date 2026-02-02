@@ -234,13 +234,13 @@ export default function TopicDetail() {
             </div>
           </div>
 
-          <div className="flex justify-between items-center mb-6 gap-4">
+          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-6 gap-4">
             <h2 className="text-xl font-bold text-slate-900">Zeitliche Entwicklung</h2>
-            <div className="flex gap-3">
+            <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
               <select
                 value={selectedParty}
                 onChange={(e) => setSelectedParty(e.target.value)}
-                className="text-sm border border-slate-300 rounded-md px-3 py-2 bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="text-sm border border-slate-300 rounded-md px-3 py-2 bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 w-full sm:w-auto min-w-0"
               >
                 <option value="all">Alle</option>
                 {partyPositions && partyPositions.length > 0 && partyPositions.map((p: any) => (
@@ -250,7 +250,7 @@ export default function TopicDetail() {
               <select
                 value={timeRange}
                 onChange={(e) => setTimeRange(e.target.value)}
-                className="text-sm border border-slate-300 rounded-md px-3 py-2 bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="text-sm border border-slate-300 rounded-md px-3 py-2 bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 w-full sm:w-auto min-w-0"
               >
                 {timeRangeOptions.map(option => (
                   <option key={option.value} value={option.value}>{option.label}</option>
