@@ -214,7 +214,7 @@ export default function PoliticianDetail() {
 
         <div className="flex-shrink-0">
           <div className="h-32 w-32 rounded-full bg-slate-200 flex items-center justify-center text-4xl font-bold text-slate-400 border-4 border-white shadow-sm">
-             {politician.name.split(' ').map((n: string) => n[0]).join('')}
+             {politician.name.split(',')[0].split(' ').map((n: string) => n[0]).join('')}
           </div>
         </div>
         <div className="flex-1 w-full">
