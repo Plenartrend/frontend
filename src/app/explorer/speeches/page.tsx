@@ -1,45 +1,35 @@
 "use client";
 
-import { Mic, Calendar, User, FileText, Loader2, Search, X } from "lucide-react";
+import { Calendar, User, FileText, Loader2, Search, X } from "lucide-react";
 import Link from "next/link";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useInfiniteScroll } from "@/hooks/useInfiniteScroll";
+import { Speech } from "@/types";
+import { formatPublisher, formatSession, formatSpeechTitle } from "@/lib/utils";
 
 export default function ExplorerSpeechesPage() {
-  const [politicians, setPoliticians] = useState<any[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
 
-  const { data: speeches, loading, loadingMore, hasMore, loadMoreRef } = useInfiniteScroll<any>({
+  const { data: speeches, loading, loadingMore, hasMore, loadMoreRef } = useInfiniteScroll<Speech>({
     fetchUrl: "/api/v1/speeches",
     pageSize: 20,
   });
 
-  useEffect(() => {
-    fetch('/api/v1/politicians?offset=0&page_size=1000')
-      .then(res => res.json())
-      .then(data => {
-        setPoliticians(data.data || data);
-      })
-      .catch(err => {
-        console.error("Failed to fetch politicians", err);
-      });
-  }, []);
-
-  const getSpeakerName = (id: string) => {
-    const p = politicians.find(p => p.id === id);
-    return p ? `${p.name} (${p.party})` : 'Unbekannt';
-  };
-
-  const sortedSpeeches = speeches.sort((a: any, b: any) => 
+  const sortedSpeeches = speeches.sort((a, b) => 
     new Date(b.date).getTime() - new Date(a.date).getTime()
   );
 
-  const filteredSpeeches = sortedSpeeches.filter(s => 
-    s.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    s.type?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    s.session?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    getSpeakerName(s.speakerId).toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredSpeeches = sortedSpeeches.filter(s => {
+    const query = searchQuery.toLowerCase();
+    const speakerName = `${s.speaker.firstName} ${s.speaker.lastName}`.toLowerCase();
+    
+    return (
+      s.title?.toLowerCase().includes(query) ||
+      s.type?.toLowerCase().includes(query) ||
+      s.session?.toLowerCase().includes(query) ||
+      speakerName.includes(query)
+    );
+  });
 
   const clearFilters = () => {
     setSearchQuery("");
@@ -92,39 +82,67 @@ export default function ExplorerSpeechesPage() {
       </div>
 
       <div className="grid grid-cols-1 gap-6">
-        {filteredSpeeches.map((speech, index) => (
-          <Link key={`${speech.id}-${index}`} href={`/speeches/${speech.id}`} className="block group">
-            <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-6 hover:border-blue-300 hover:shadow-md transition-all">
-              <div className="flex justify-between items-start mb-4">
-                <div>
-                  <div className="flex items-center gap-2 text-xs text-blue-600 font-medium mb-1">
-                    <span className="bg-blue-50 px-2 py-0.5 rounded text-[10px] uppercase tracking-wide">{speech.type}</span>
-                    <span className="text-slate-400">•</span>
-                    <span className="text-slate-500">{speech.session}</span>
+        {filteredSpeeches.map((speech, index) => {
+          const showTopic = speech.topic && speech.topic.id !== '-1' && speech.topic.category !== '';
+          const speakerName = `${speech.speaker.firstName} ${speech.speaker.lastName} (${speech.speaker.party})`;
+          const publisher = formatPublisher(speech.publisher);
+          const session = formatSession(speech.session);
+          const displayTitle = formatSpeechTitle(
+            speech.publisher,
+            speech.title,
+            speech.speaker.firstName,
+            speech.speaker.lastName,
+            speech.date,
+            speech.topic?.id,
+            speech.topic?.category
+          );
+
+          return (
+            <Link key={`${speech.id}-${index}`} href={`/speeches/${speech.id}`} className="block group">
+              <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-6 hover:border-blue-300 hover:shadow-md transition-all">
+                <div className="flex justify-between items-start mb-4">
+                  <div>
+                    <div className="flex items-center gap-2 text-xs text-blue-600 font-medium mb-1 flex-wrap">
+                      {publisher && (
+                         <>
+                           <span className="bg-blue-50 px-2 py-0.5 rounded text-[10px] uppercase tracking-wide">{publisher}</span>
+                           <span className="text-slate-400">•</span>
+                         </>
+                      )}
+                      <span className="text-slate-600 font-semibold">{speech.type}</span>
+                      {session && (
+                         <>
+                           <span className="text-slate-400">•</span>
+                           <span className="text-slate-500">{session}</span>
+                         </>
+                      )}
+                    </div>
+                    <h3 className="text-lg font-bold text-slate-900 group-hover:text-blue-600 transition-colors mt-1">
+                      {displayTitle}
+                    </h3>
                   </div>
-                  <h3 className="text-lg font-bold text-slate-900 group-hover:text-blue-600 transition-colors">
-                    {speech.title}
-                  </h3>
+                  <div className="flex items-center text-slate-400 text-xs gap-1 bg-slate-50 px-2 py-1 rounded shrink-0">
+                    <Calendar className="h-3 w-3" />
+                    {new Date(speech.date).toLocaleDateString('de-DE')}
+                  </div>
                 </div>
-                <div className="flex items-center text-slate-400 text-xs gap-1 bg-slate-50 px-2 py-1 rounded">
-                  <Calendar className="h-3 w-3" />
-                  {new Date(speech.date).toLocaleDateString('de-DE')}
+                
+                <div className="flex items-center gap-6 text-sm text-slate-600 border-t border-slate-100 pt-4">
+                   <div className="flex items-center gap-2">
+                      <User className="h-4 w-4 text-slate-400" />
+                      <span className="font-medium text-slate-700">{speakerName}</span> 
+                   </div>
+                   {showTopic && (
+                     <div className="flex items-center gap-2">
+                        <FileText className="h-4 w-4 text-slate-400" />
+                        <span>{speech.topic!.category}</span>
+                     </div>
+                   )}
                 </div>
               </div>
-              
-              <div className="flex items-center gap-6 text-sm text-slate-600 border-t border-slate-100 pt-4">
-                 <div className="flex items-center gap-2">
-                    <User className="h-4 w-4 text-slate-400" />
-                    <span className="font-medium text-slate-700">{getSpeakerName(speech.speakerId)}</span> 
-                 </div>
-                 <div className="flex items-center gap-2">
-                    <FileText className="h-4 w-4 text-slate-400" />
-                    <span>Dauer: {speech.duration}</span>
-                 </div>
-              </div>
-            </div>
-          </Link>
-        ))}
+            </Link>
+          );
+        })}
       </div>
 
       {/* Infinite scroll trigger */}

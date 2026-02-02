@@ -28,7 +28,7 @@ export interface SpeechSnippet {
   party: string;
   text: string;
   date: string;
-  sentiment?: string;
+  sentiment?: "stark positiv" | "positiv" | "neutral" | "negativ" | "stark negativ" | "unbekannt";
   fullSpeechId?: string;
 }
 
@@ -41,6 +41,8 @@ export interface PartyPosition {
 export interface TopTopic {
   topic: string;
   stance: string;
+  sentiment?: number;
+  speechCount?: number;
 }
 
 export interface Politician {
@@ -51,7 +53,6 @@ export interface Politician {
   volatility: string;
   contributionFactor: 'low' | 'medium' | 'high';
   topTopics?: TopTopic[];
-  similar?: string[];
   numSpeeches?: number;
 }
 
@@ -70,27 +71,58 @@ export interface TopicDetail extends Topic {
     pro: Politician[];
     contra: Politician[];
   };
-  // Note: trendData and positionData fetched separately from /analysis/time-series
 }
 
 export interface FullSpeech {
   id: string;
+  publisher?: string;
   speakerId: string;
   title: string;
   date: string;
-  duration: string;
+  duration?: string;
   type: string;
   session: string;
   topicId?: string;
   relatedTopics: string[];
   content: string;
-  sentiment?: string;
+  sentiment?: "stark positiv" | "positiv" | "neutral" | "negativ" | "stark negativ" | "unbekannt";
   sourceUrl?: string;
 }
 
+export interface Speech {
+  id: string;
+  publisher?: string;
+  type: string;
+  title: string;
+  date: string;
+  speaker: PoliticianRef;
+  topic?: TopicRef;
+  session: string;
+}
+
+export interface PaginatedSpeeches {
+  data: Speech[];
+  total_items: number;
+  page: number;
+  page_size: number;
+}
+
+export interface PoliticianRef {
+  id: string;
+  firstName: string;
+  lastName: string;
+  party: string;
+}
+
+export interface TopicRef {
+  id: string;
+  category: string;
+}
+
 export interface SpeechDetail extends FullSpeech {
-  speaker?: Politician;
-  topic?: Topic;
+  speaker?: PoliticianRef;
+  topic?: TopicRef;
+  reason?: string;
 }
 
 export interface PoliticianDetail extends Politician {
