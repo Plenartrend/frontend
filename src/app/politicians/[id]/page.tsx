@@ -3,13 +3,15 @@
 import { TrendChart } from "@/components/ui/TrendChart";
 import { ChevronRight, Share2, Activity, Award, BarChart3, Users, Mic, Calendar, Loader2 } from "lucide-react";
 import Link from "next/link";
-import { useParams } from "next/navigation";
+import { useParams, useSearchParams, useRouter } from "next/navigation";
 import { WatchButton } from "@/components/ui/WatchButton";
 import { useEffect, useState } from "react";
 import { BackButton } from "@/components/ui/BackButton";
 
 export default function PoliticianDetail() {
   const params = useParams();
+  const searchParams = useSearchParams();
+  const router = useRouter();
   const id = params?.id as string;
   const [politicianData, setPoliticianData] = useState<any>(null);
   const [similarPoliticians, setSimilarPoliticians] = useState<any[]>([]);
@@ -22,6 +24,7 @@ export default function PoliticianDetail() {
   const [selectedPeriod, setSelectedPeriod] = useState<number | null>(null);
   const [loadingPeriods, setLoadingPeriods] = useState(true);
   const [timeRange, setTimeRange] = useState<string>('last_year');
+  const [copied, setCopied] = useState(false);
 
   const timeRangeOptions = [
     { value: 'last_6_months', label: 'Letzte 6 Monate' },
@@ -52,7 +55,17 @@ export default function PoliticianDetail() {
         if (Array.isArray(data)) {
           const filtered = data.filter(p => p.number > 0);
           setElectionPeriods(filtered);
-          if (filtered.length > 0) {
+          
+          // Check for election_period in URL params
+          const urlPeriod = searchParams.get('election_period');
+          if (urlPeriod) {
+            const periodNum = parseInt(urlPeriod);
+            if (filtered.some(p => p.number === periodNum)) {
+              setSelectedPeriod(periodNum);
+            } else if (filtered.length > 0) {
+              setSelectedPeriod(filtered[0].number);
+            }
+          } else if (filtered.length > 0) {
             setSelectedPeriod(filtered[0].number);
           }
         } else {
@@ -65,7 +78,7 @@ export default function PoliticianDetail() {
         setElectionPeriods([]);
         setLoadingPeriods(false);
       });
-  }, []);
+  }, [searchParams]);
 
   useEffect(() => {
     if (!id || selectedPeriod === null) return;
@@ -160,7 +173,14 @@ export default function PoliticianDetail() {
         <select
           id="period-select"
           value={selectedPeriod || ''}
-          onChange={(e) => setSelectedPeriod(Number(e.target.value))}
+          onChange={(e) => {
+            const newPeriod = Number(e.target.value);
+            setSelectedPeriod(newPeriod);
+            // Update URL with new election period
+            const newUrl = new URL(window.location.href);
+            newUrl.searchParams.set('election_period', newPeriod.toString());
+            router.push(newUrl.pathname + newUrl.search);
+          }}
           disabled={loadingPeriods}
           className="rounded-md border-0 py-2 px-3 text-slate-900 ring-1 ring-inset ring-slate-300 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:text-sm bg-white shadow-sm"
         >
@@ -178,9 +198,16 @@ export default function PoliticianDetail() {
 
       <div className="bg-white rounded-xl shadow border border-slate-200 p-6 md:p-8 flex flex-col md:flex-row gap-8 items-center relative">
         <div className="absolute top-6 right-6 flex flex-col-reverse gap-2 md:flex-row">
-          <button className="inline-flex items-center gap-2 rounded-md bg-white px-3 py-2 text-sm font-semibold text-slate-700 shadow-sm ring-1 ring-inset ring-slate-300 hover:bg-slate-50">
+          <button 
+            onClick={() => {
+              navigator.clipboard.writeText(window.location.href);
+              setCopied(true);
+              setTimeout(() => setCopied(false), 2000);
+            }}
+            className="inline-flex items-center gap-2 rounded-md bg-white px-3 py-2 text-sm font-semibold text-slate-700 shadow-sm ring-1 ring-inset ring-slate-300 hover:bg-slate-50"
+          >
             <Share2 className="h-4 w-4" />
-            <span>Profil Teilen</span>
+            <span>{copied ? 'Kopiert!' : 'Profil Teilen'}</span>
           </button>
           <WatchButton id={id} type="politician" label="Beobachten" />
         </div>
@@ -393,7 +420,7 @@ export default function PoliticianDetail() {
                      {similarPoliticians.map((sim: any) => (
                        <li key={sim.id} className="flex items-center gap-2 text-sm">
                          <div className="w-6 h-6 bg-slate-200 rounded-full flex items-center justify-center text-xs">{sim.name?.[0] || '?'}</div>
-                         <Link href={`/politicians/${sim.id}`} className="hover:underline hover:text-blue-600">{sim.name} ({sim.party})</Link>
+                         <Link href={`/politicians/${sim.id}?election_period=${selectedPeriod}`} className="hover:underline hover:text-blue-600">{sim.name} ({sim.party})</Link>
                        </li>
                      ))}
                   </ul>
