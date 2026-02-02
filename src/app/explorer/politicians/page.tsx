@@ -244,10 +244,6 @@ export default function ExplorerPoliticiansPage() {
           </div>
           
           <div className="flex gap-3">
-            <div className="w-full sm:w-auto px-2 text-sm text-slate-500 italic whitespace-nowrap shrink-0 text-right">
-              {filteredPoliticians.length} Ergebnisse
-            </div>
-
             {(searchQuery || selectedGroup || selectedContribution || selectedLetter) && (
               <button 
                 onClick={clearFilters}
@@ -304,7 +300,7 @@ export default function ExplorerPoliticiansPage() {
                   onClick={() => setSelectedLetter(selectedLetter === letter ? "" : letter)}
                   disabled={count === 0}
                   className={`
-                    flex-shrink-0 min-w-[44px] px-3 py-2 rounded-md text-sm font-medium transition-all
+                    flex-1 min-w-[44px] px-3 py-2 rounded-md text-sm font-medium transition-all
                     ${count === 0 
                       ? 'bg-slate-50 text-slate-300 cursor-not-allowed' 
                       : selectedLetter === letter

@@ -8,7 +8,7 @@ import { useInfiniteScroll } from "@/hooks/useInfiniteScroll";
 export default function ExplorerTopicsPage() {
   const [searchQuery, setSearchQuery] = useState("");
   
-  const { data: topics, loading, loadingMore, hasMore, loadMoreRef } = useInfiniteScroll<any>({
+  const { data: topics, loading, loadingMore, hasMore, loadMoreRef, totalItems } = useInfiniteScroll<any>({
     fetchUrl: "/api/v1/topics",
     pageSize: 20,
   });
@@ -89,10 +89,16 @@ export default function ExplorerTopicsPage() {
               onChange={(e) => setSearchQuery(e.target.value)}
             />
           </div>
-          <div className="w-full sm:w-auto px-2 text-sm text-slate-500 italic whitespace-nowrap shrink-0 text-right">
-            {sortedTopics.length} Ergebnisse
-          </div>
         </div>
+      </div>
+
+      {/* Results count */}
+      <div className="text-sm text-slate-500">
+        {searchQuery ? (
+          <>{sortedTopics.length} von {totalItems} {totalItems === 1 ? 'Thema' : 'Themen'} gefunden</>
+        ) : (
+          <>{totalItems} {totalItems === 1 ? 'Thema' : 'Themen'} gefunden</>
+        )}
       </div>
 
       <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
