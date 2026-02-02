@@ -250,7 +250,7 @@ export default function TopicDetail() {
                   
                   return (
                     <li key={speech.id} className="bg-slate-50 p-4 rounded-lg relative hover:bg-slate-100 transition-colors">
-                      <p className="text-sm text-slate-700 italic">
+                      <p className="text-sm text-slate-700">
                         "{isExpanded ? fullText : truncatedText}"
                       </p>
                       <div className="mt-2 flex items-center justify-between text-xs">

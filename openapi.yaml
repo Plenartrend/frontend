@@ -586,7 +586,7 @@ components:
             speeches:
               type: array
               items:
-                $ref: '#/components/schemas/FullSpeech'
+                $ref: '#/components/schemas/SpeechSnippet'
             activityData:
               type: array
               items:
