@@ -7,7 +7,9 @@ import {
   SpeechSnippet, 
   PartyPosition, 
   FullSpeech,
-  Report
+  Report,
+  PoliticianRef,
+  TopicRef
 } from '@/types';
 
 const getDynamicDate = (offsetDays = 0, hour = 10) => {
@@ -57,8 +59,7 @@ export const POLITICIANS: Politician[] = [
       { topic: 'Energie', stance: 'Stark dafür' },
       { topic: 'Wirtschaft', stance: 'Dafür' },
       { topic: 'EU', stance: 'Neutral' }
-    ],
-    similar: ['p4', 'p6']
+    ]
   },
   { 
     id: 'p2', 
@@ -71,8 +72,7 @@ export const POLITICIANS: Politician[] = [
       { topic: 'Soziales', stance: 'Stark dafür' },
       { topic: 'Arbeit', stance: 'Dafür' },
       { topic: 'Familie', stance: 'Dafür' }
-    ],
-    similar: ['p3', 'p8']
+    ]
   },
   { 
     id: 'p3', 
@@ -85,8 +85,7 @@ export const POLITICIANS: Politician[] = [
       { topic: 'Umwelt', stance: 'Stark dafür' },
       { topic: 'Verkehr', stance: 'Dafür' },
       { topic: 'Digitales', stance: 'Neutral' }
-    ],
-    similar: ['p2', 'p11']
+    ]
   },
   { 
     id: 'p4', 
@@ -99,8 +98,7 @@ export const POLITICIANS: Politician[] = [
       { topic: 'Finanzen', stance: 'Stark dafür' },
       { topic: 'Steuern', stance: 'Dagegen' },
       { topic: 'Recht', stance: 'Neutral' }
-    ],
-    similar: ['p1', 'p7']
+    ]
   },
   { 
     id: 'p5', 
@@ -113,8 +111,7 @@ export const POLITICIANS: Politician[] = [
       { topic: 'Frieden', stance: 'Stark dafür' },
       { topic: 'Wirtschaft', stance: 'Kritisch' },
       { topic: 'Soziales', stance: 'Dafür' }
-    ],
-    similar: ['p12']
+    ]
   },
   { 
     id: 'p6', 
@@ -127,8 +124,7 @@ export const POLITICIANS: Politician[] = [
       { topic: 'Finanzen', stance: 'Stark dafür' },
       { topic: 'Wirtschaft', stance: 'Dafür' },
       { topic: 'Inneres', stance: 'Stark dafür' }
-    ],
-    similar: ['p1', 'p4']
+    ]
   },
   { 
     id: 'p7', 
@@ -141,8 +137,7 @@ export const POLITICIANS: Politician[] = [
       { topic: 'Haushalt', stance: 'Stark dafür' },
       { topic: 'Steuern', stance: 'Dagegen' },
       { topic: 'Digitalisierung', stance: 'Dafür' }
-    ],
-    similar: ['p4', 'p6']
+    ]
   },
   { 
     id: 'p8', 
@@ -155,8 +150,7 @@ export const POLITICIANS: Politician[] = [
       { topic: 'Wohnen', stance: 'Dafür' },
       { topic: 'Arbeit', stance: 'Stark dafür' },
       { topic: 'Soziales', stance: 'Dafür' }
-    ],
-    similar: ['p2', 'p3']
+    ]
   },
   { 
     id: 'p9', 
@@ -169,8 +163,7 @@ export const POLITICIANS: Politician[] = [
       { topic: 'Migration', stance: 'Stark dagegen' },
       { topic: 'EU', stance: 'Kritisch' },
       { topic: 'Energie', stance: 'Dagegen' }
-    ],
-    similar: []
+    ]
   },
   { 
     id: 'p10', 
@@ -183,8 +176,7 @@ export const POLITICIANS: Politician[] = [
       { topic: 'Wirtschaft', stance: 'Dafür' },
       { topic: 'Klima', stance: 'Stark dafür' },
       { topic: 'Energie', stance: 'Dafür' }
-    ],
-    similar: ['p3', 'p11']
+    ]
   },
   { 
     id: 'p11', 
@@ -197,8 +189,7 @@ export const POLITICIANS: Politician[] = [
       { topic: 'Soziales', stance: 'Stark dafür' },
       { topic: 'Frauen', stance: 'Stark dafür' },
       { topic: 'Klima', stance: 'Dafür' }
-    ],
-    similar: ['p3', 'p10']
+    ]
   },
   { 
     id: 'p12', 
@@ -211,8 +202,7 @@ export const POLITICIANS: Politician[] = [
       { topic: 'Außenpolitik', stance: 'Kritisch' },
       { topic: 'Soziales', stance: 'Stark dafür' },
       { topic: 'Kultur', stance: 'Dafür' }
-    ],
-    similar: ['p5']
+    ]
   }
 ];
 
