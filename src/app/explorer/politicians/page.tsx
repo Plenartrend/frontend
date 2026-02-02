@@ -12,10 +12,15 @@ export default function ExplorerPoliticiansPage() {
   const [parliamentaryGroups, setParliamentaryGroups] = useState<any[]>([]);
   const [selectedGroup, setSelectedGroup] = useState<number | null>(null);
   const [selectedContribution, setSelectedContribution] = useState<string>("");
+  const [selectedLetter, setSelectedLetter] = useState<string>("");
   const [politicians, setPoliticians] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [displayCount, setDisplayCount] = useState(20);
   const loadMoreRef = useRef<HTMLDivElement>(null);
+  const letterScrollRef = useRef<HTMLDivElement>(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const [startX, setStartX] = useState(0);
+  const [scrollLeft, setScrollLeft] = useState(0);
 
   // Fetch election periods
   useEffect(() => {
@@ -102,20 +107,60 @@ export default function ExplorerPoliticiansPage() {
       
       const matchesContribution = !selectedContribution || p.contributionFactor === selectedContribution;
       
+      // Extract last name (last word in name)
+      const lastName = p.name?.split(' ').pop() || '';
+      const firstLetter = lastName.charAt(0).toUpperCase();
+      const matchesLetter = !selectedLetter || firstLetter === selectedLetter;
+      
+      return matchesSearch && matchesGroup && matchesContribution && matchesLetter;
+    });
+  }, [searchQuery, politicians, selectedGroup, selectedContribution, selectedLetter, parliamentaryGroups]);
+
+  // Calculate letter counts based on current filters (excluding letter filter)
+  const letterCounts = useMemo(() => {
+    const counts: Record<string, number> = {};
+    const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
+    
+    // Initialize all letters to 0
+    alphabet.forEach(letter => counts[letter] = 0);
+    
+    // Filter politicians by current filters (excluding letter filter)
+    const filteredForCounting = politicians.filter(p => {
+      const matchesSearch = !searchQuery || 
+        p.name?.toLowerCase().includes(searchQuery.toLowerCase()) || 
+        p.party?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        p.role?.toLowerCase().includes(searchQuery.toLowerCase());
+      
+      const matchesGroup = !selectedGroup || p.party === parliamentaryGroups.find(g => g.id === selectedGroup)?.name;
+      
+      const matchesContribution = !selectedContribution || p.contributionFactor === selectedContribution;
+      
       return matchesSearch && matchesGroup && matchesContribution;
     });
-  }, [searchQuery, politicians, selectedGroup, selectedContribution, parliamentaryGroups]);
+    
+    // Count politicians by first letter of last name
+    filteredForCounting.forEach(p => {
+      const lastName = p.name?.split(' ').pop() || '';
+      const firstLetter = lastName.charAt(0).toUpperCase();
+      if (firstLetter && /[A-Z]/.test(firstLetter)) {
+        counts[firstLetter] = (counts[firstLetter] || 0) + 1;
+      }
+    });
+    
+    return counts;
+  }, [politicians, searchQuery, selectedGroup, selectedContribution, parliamentaryGroups]);
 
   const clearFilters = () => {
     setSearchQuery("");
     setSelectedGroup(null);
     setSelectedContribution("");
+    setSelectedLetter("");
   };
 
   // Reset display count when filters change
   useEffect(() => {
     setDisplayCount(20);
-  }, [searchQuery, selectedGroup, selectedContribution]);
+  }, [searchQuery, selectedGroup, selectedContribution, selectedLetter]);
 
   // Infinite scroll observer
   useEffect(() => {
@@ -138,6 +183,35 @@ export default function ExplorerPoliticiansPage() {
   const displayedPoliticians = useMemo(() => {
     return filteredPoliticians.slice(0, displayCount);
   }, [filteredPoliticians, displayCount]);
+
+  // Drag to scroll handlers
+  const handleMouseDown = (e: React.MouseEvent) => {
+    if (!letterScrollRef.current) return;
+    setIsDragging(true);
+    setStartX(e.pageX - letterScrollRef.current.offsetLeft);
+    setScrollLeft(letterScrollRef.current.scrollLeft);
+    letterScrollRef.current.style.cursor = 'grabbing';
+  };
+
+  const handleMouseLeave = () => {
+    if (!letterScrollRef.current) return;
+    setIsDragging(false);
+    letterScrollRef.current.style.cursor = 'grab';
+  };
+
+  const handleMouseUp = () => {
+    if (!letterScrollRef.current) return;
+    setIsDragging(false);
+    letterScrollRef.current.style.cursor = 'grab';
+  };
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (!isDragging || !letterScrollRef.current) return;
+    e.preventDefault();
+    const x = e.pageX - letterScrollRef.current.offsetLeft;
+    const walk = (x - startX) * 2; // Multiply for faster scroll
+    letterScrollRef.current.scrollLeft = scrollLeft - walk;
+  };
 
   if (loading) {
     return (
@@ -174,7 +248,7 @@ export default function ExplorerPoliticiansPage() {
               {filteredPoliticians.length} Ergebnisse
             </div>
 
-            {(searchQuery || selectedGroup || selectedContribution) && (
+            {(searchQuery || selectedGroup || selectedContribution || selectedLetter) && (
               <button 
                 onClick={clearFilters}
                 className="inline-flex items-center gap-1 px-3 py-1.5 text-sm text-slate-500 hover:text-red-600 hover:bg-red-50 rounded-md transition-colors"
@@ -183,6 +257,88 @@ export default function ExplorerPoliticiansPage() {
                 Reset
               </button>
             )}
+          </div>
+        </div>
+
+        {/* Alphabetical Filter */}
+        <div className="bg-white p-4 rounded-lg shadow-sm border border-slate-200">
+          <div className="flex items-center gap-3 mb-3">
+            <span className="text-sm font-medium text-slate-700 whitespace-nowrap">Nachname:</span>
+            {selectedLetter && (
+              <button
+                onClick={() => setSelectedLetter("")}
+                className="text-xs text-blue-600 hover:text-blue-700 underline"
+              >
+                Alle anzeigen
+              </button>
+            )}
+          </div>
+          <div className="relative">
+            {/* Left scroll button */}
+            <button
+              onClick={() => {
+                const container = document.getElementById('letter-scroll');
+                if (container) container.scrollBy({ left: -200, behavior: 'smooth' });
+              }}
+              className="absolute left-0 top-1/2 -translate-y-1/2 z-10 h-10 w-10 bg-white rounded-full shadow-lg border border-slate-200 flex items-center justify-center text-slate-600 hover:bg-slate-50 hover:text-slate-900 transition-colors"
+              aria-label="Scroll left"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+              </svg>
+            </button>
+
+            {/* Scrollable letter container */}
+            <div 
+              ref={letterScrollRef}
+              id="letter-scroll"
+              className="flex gap-1.5 overflow-x-auto scrollbar-hide scroll-smooth px-12 select-none cursor-grab active:cursor-grabbing"
+              onMouseDown={handleMouseDown}
+              onMouseLeave={handleMouseLeave}
+              onMouseUp={handleMouseUp}
+              onMouseMove={handleMouseMove}
+            >
+              {Object.entries(letterCounts).map(([letter, count]) => (
+                <button
+                  key={letter}
+                  onClick={() => setSelectedLetter(selectedLetter === letter ? "" : letter)}
+                  disabled={count === 0}
+                  className={`
+                    flex-shrink-0 min-w-[44px] px-3 py-2 rounded-md text-sm font-medium transition-all
+                    ${count === 0 
+                      ? 'bg-slate-50 text-slate-300 cursor-not-allowed' 
+                      : selectedLetter === letter
+                        ? 'bg-blue-600 text-white shadow-md ring-2 ring-blue-600 ring-offset-1'
+                        : 'bg-slate-100 text-slate-700 hover:bg-blue-50 hover:text-blue-700 hover:shadow-sm'
+                    }
+                  `}
+                  title={count === 0 ? 'Keine Abgeordnete' : `${count} Abgeordnete`}
+                >
+                  <div className="flex flex-col items-center leading-tight">
+                    <span className="font-bold">{letter}</span>
+                    {count > 0 && (
+                      <span className={`text-[10px] ${selectedLetter === letter ? 'text-blue-100' : 'text-slate-500'}`}>
+                        {count}
+                      </span>
+                    )}
+                  </div>
+                </button>
+              ))}
+            </div>
+
+            {/* Right scroll button */}
+            <button
+              onClick={() => {
+                const container = document.getElementById('letter-scroll');
+                if (container) container.scrollBy({ left: 200, behavior: 'smooth' });
+              }}
+              className="absolute right-0 top-1/2 -translate-y-1/2 z-10 h-10 w-10 bg-white rounded-full shadow-lg border border-slate-200 flex items-center justify-center text-slate-600 hover:bg-slate-50 hover:text-slate-900 transition-colors"
+              aria-label="Scroll right"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
+            </button>
           </div>
         </div>
 
@@ -226,6 +382,11 @@ export default function ExplorerPoliticiansPage() {
             <option value="high">Hoch</option>
           </select>
         </div>
+      </div>
+
+      {/* Results count */}
+      <div className="text-sm text-slate-500">
+        {filteredPoliticians.length} {filteredPoliticians.length === 1 ? 'Abgeordneter' : 'Abgeordnete'} gefunden
       </div>
 
       <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
