@@ -85,7 +85,6 @@ export default function PoliticianDetail() {
 
     setLoading(true);
     setLoadingSimilar(true);
-    setLoadingActivity(true);
     
     const queryParams = new URLSearchParams();
     queryParams.set('election_period', selectedPeriod.toString());
@@ -123,6 +122,17 @@ export default function PoliticianDetail() {
         setSimilarPoliticians([]);
         setLoadingSimilar(false);
       });
+  }, [id, selectedPeriod]);
+
+  // Separate effect for activity data that depends on timeRange
+  useEffect(() => {
+    if (!id || selectedPeriod === null) return;
+
+    setLoadingActivity(true);
+    
+    const queryParams = new URLSearchParams();
+    queryParams.set('election_period', selectedPeriod.toString());
+    queryParams.set('time_range', timeRange);
 
     // Fetch activity data separately
     fetch(`/api/v1/politicians/${id}/activity?${queryParams.toString()}`)
