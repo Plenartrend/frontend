@@ -22,6 +22,7 @@ export default function TopicDetail() {
   const [timeRange, setTimeRange] = useState<string>('last_6_months');
   const hasUpdatedVisit = useRef(false);
   const [copied, setCopied] = useState(false);
+  const [selectedParty, setSelectedParty] = useState<string>('all');
 
   const [chartsLoading, setChartsLoading] = useState(true);
 
@@ -79,10 +80,25 @@ export default function TopicDetail() {
 
   // Fetch time series data separately
   useEffect(() => {
-    if (!id) return;
+    if (!id || !topicData) return;
     
     setChartsLoading(true);
-    fetch(`/api/v1/analysis/time-series?time_range=${timeRange}&topic_id=${id}`)
+
+    // Find the group_id from partyPositions if a specific party is selected
+    let groupId: number | null = null;
+    if (selectedParty !== 'all' && topicData.partyPositions) {
+      const selectedPartyData = topicData.partyPositions.find((p: any) => p.party === selectedParty);
+      if (selectedPartyData && selectedPartyData.groupId) {
+        groupId = selectedPartyData.groupId;
+      }
+    }
+
+    let url = `/api/v1/analysis/time-series?time_range=${timeRange}&topic_id=${id}`;
+    if (groupId) {
+      url += `&group_id=${groupId}`;
+    }
+
+    fetch(url)
       .then(res => {
         if (!res.ok) throw new Error("Failed to fetch time-series");
         return res.json();
@@ -108,10 +124,11 @@ export default function TopicDetail() {
         setPositionData(sentimentSeries);
         setChartsLoading(false);
       })
-      .catch(() => {
+      .catch((err) => {
+        console.error('Failed to fetch time series:', err);
         setChartsLoading(false);
       });
-  }, [id, timeRange]); // Re-fetch when timeRange changes
+  }, [id, timeRange, selectedParty, topicData]); // Re-fetch when timeRange or selectedParty changes
 
   if (loading) {
     return (
@@ -133,7 +150,7 @@ export default function TopicDetail() {
     );
   }
 
-  const { speeches, partyPositions, stakeholders } = topicData;
+  const { speeches, partyPositions, stakeholders } = topicData || {};
   
   console.log('Speeches:', speeches);
   console.log('Party positions:', partyPositions);
@@ -190,22 +207,62 @@ export default function TopicDetail() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2 space-y-8">
           
-          <div className="flex justify-between items-center mb-6">
+          <div className="rounded-lg bg-white p-6 shadow border border-slate-100">
+            <h2 className="text-lg font-bold text-slate-900 mb-4">Momentane Position pro Partei</h2>
+            <div className="space-y-3">
+              {partyPositions && partyPositions.length > 0 ? (
+                partyPositions.map((p: any) => (
+                  <div key={p.party} className="flex items-center gap-3 sm:gap-4" title={`${p.party}: Stimmung ${p.sentiment > 0 ? '+' : ''}${p.sentiment}`}>
+                    <div className="w-12 sm:w-20 font-semibold text-slate-700 text-[11px] sm:text-xs truncate" title={p.party}>{p.party}</div>
+                    <div className="flex-1 relative h-7 bg-slate-100 rounded-md overflow-hidden flex items-center">
+                      <div className="absolute left-1/2 top-0 bottom-0 w-px bg-slate-300"></div>
+                      <div
+                        className={`h-full opacity-80 ${p.sentiment > 0 ? 'bg-green-500' : 'bg-red-500'}`}
+                        style={{
+                          width: `${Math.abs(p.sentiment) / 2}%`,
+                          marginLeft: p.sentiment > 0 ? '50%' : `calc(50% - ${Math.abs(p.sentiment) / 2}%)`
+                        }}
+                      ></div>
+                    </div>
+                     <div className="hidden sm:block w-10 text-right text-[11px] text-slate-500">{p.sentiment > 0 ? '+' : ''}{p.sentiment.toFixed(2)}</div>
+                  </div>
+                ))
+              ) : (
+                <p className="text-slate-500 text-sm">Keine Partei-Daten verfügbar.</p>
+              )}
+              <p className="text-xs text-slate-400 mt-2 text-center">Balken: Stimmung (Links=Negativ, Rechts=Positiv)</p>
+            </div>
+          </div>
+
+          <div className="flex justify-between items-center mb-6 gap-4">
             <h2 className="text-xl font-bold text-slate-900">Zeitliche Entwicklung</h2>
-            <select
-              value={timeRange}
-              onChange={(e) => setTimeRange(e.target.value)}
-              className="text-sm border border-slate-300 rounded-md px-3 py-2 bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              {timeRangeOptions.map(option => (
-                <option key={option.value} value={option.value}>{option.label}</option>
-              ))}
-            </select>
+            <div className="flex gap-3">
+              <select
+                value={selectedParty}
+                onChange={(e) => setSelectedParty(e.target.value)}
+                className="text-sm border border-slate-300 rounded-md px-3 py-2 bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="all">Alle</option>
+                {partyPositions && partyPositions.length > 0 && partyPositions.map((p: any) => (
+                  <option key={p.party} value={p.party}>{p.party}</option>
+                ))}
+              </select>
+              <select
+                value={timeRange}
+                onChange={(e) => setTimeRange(e.target.value)}
+                className="text-sm border border-slate-300 rounded-md px-3 py-2 bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                {timeRangeOptions.map(option => (
+                  <option key={option.value} value={option.value}>{option.label}</option>
+                ))}
+              </select>
+            </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="rounded-lg bg-white p-6 shadow border border-slate-100">
-              <h3 className="text-lg font-semibold text-slate-900 mb-4">Relevanz über Zeit</h3>
+              <h3 className="text-lg font-semibold text-slate-900 mb-2">Relevanz über Zeit</h3>
+              <p className="text-sm text-slate-500 mb-4">Wann wurde über {topicData.title} diskutiert</p>
               {chartsLoading ? (
                 <div className="flex items-center justify-center h-64">
                   <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
@@ -215,7 +272,8 @@ export default function TopicDetail() {
               )}
             </div>
             <div className="rounded-lg bg-white p-6 shadow border border-slate-100">
-              <h3 className="text-lg font-semibold text-slate-900 mb-4">Position über Zeit</h3>
+              <h3 className="text-lg font-semibold text-slate-900 mb-2">Position über Zeit</h3>
+              <p className="text-sm text-slate-500 mb-4">Wie hat sich die Stimmung zu {topicData.title} entwickelt</p>
               {chartsLoading ? (
                 <div className="flex items-center justify-center h-64">
                   <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
@@ -229,37 +287,6 @@ export default function TopicDetail() {
                   yAxisDomain={[-100, 100]}
                 />
               )}
-            </div>
-          </div>
-
-          <div className="rounded-lg bg-white p-6 shadow border border-slate-100">
-            <h2 className="text-lg font-bold text-slate-900 mb-4">Position & Relevanz nach Partei</h2>
-            <div className="space-y-3">
-              {partyPositions && partyPositions.length > 0 ? (
-                partyPositions.map((p: any) => (
-                  <div key={p.party} className="flex items-center gap-3 sm:gap-4" title={`${p.party}: Stimmung ${p.sentiment > 0 ? '+' : ''}${p.sentiment}, Relevanz ${p.relevance != null ? Math.round(p.relevance * 100) : 0}%`}>
-                    <div className="w-12 sm:w-20 font-semibold text-slate-700 text-[11px] sm:text-xs truncate" title={p.party}>{p.party}</div>
-                    <div className="flex-1 relative h-7 bg-slate-100 rounded-md overflow-hidden flex items-center">
-                      <div className="absolute left-1/2 top-0 bottom-0 w-px bg-slate-300"></div>
-                      <div 
-                        className={`h-full opacity-80 ${p.sentiment > 0 ? 'bg-green-500' : 'bg-red-500'}`}
-                        style={{ 
-                          width: `${Math.abs(p.sentiment) / 2}%`,
-                          marginLeft: p.sentiment > 0 ? '50%' : `calc(50% - ${Math.abs(p.sentiment) / 2}%)`
-                        }}
-                      ></div>
-                       <div 
-                        className="absolute h-2.5 w-2.5 rounded-full bg-slate-900 border-2 border-white"
-                        style={{ left: `${(p.relevance ?? 0) * 100}%` }}
-                      ></div>
-                    </div>
-                     <div className="hidden sm:block w-10 text-right text-[11px] text-slate-500">{p.sentiment > 0 ? '+' : ''}{p.sentiment.toFixed(2)}</div>
-                  </div>
-                ))
-              ) : (
-                <p className="text-slate-500 text-sm">Keine Partei-Daten verfügbar.</p>
-              )}
-              <p className="text-xs text-slate-400 mt-2 text-center">Balken: Stimmung (Links=Negativ, Rechts=Positiv) • Punkt: Relevanz innerhalb der Partei</p>
             </div>
           </div>
 
@@ -359,21 +386,6 @@ export default function TopicDetail() {
                   <p className="text-slate-500 text-sm">Keine Contra-Akteure verfügbar.</p>
                 )}
              </div>
-          </div>
-          
-          <div className="rounded-lg bg-white p-6 shadow border border-slate-100">
-            <h2 className="text-lg font-bold text-slate-900 mb-4">Schlagwörter</h2>
-            <div className="flex flex-wrap gap-2">
-              {['Gesetzgebung', 'Haushalt', 'Reform', 'Opposition', 'Ausschuss', 'Abstimmung', 'Änderungsantrag', 'Anhörung', 'EU-Ebene', 'Bundesrat'].map((word, i) => (
-                <span 
-                  key={word} 
-                  className="px-3 py-1 rounded-full bg-slate-100 text-slate-700 text-sm hover:bg-slate-200 cursor-pointer"
-                  style={{ fontSize: `${Math.max(0.8, 1.3 - i * 0.08)}rem`, opacity: Math.max(0.5, 1 - i * 0.08) }}
-                >
-                  {word}
-                </span>
-              ))}
-            </div>
           </div>
 
         </div>
