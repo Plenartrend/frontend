@@ -226,8 +226,8 @@ export default function PartyDetail() {
         </select>
       </div>
 
-      <div className="bg-white rounded-xl shadow border border-slate-200 p-6 md:p-8 relative">
-        <div className="absolute top-6 right-6 flex flex-col-reverse gap-2 md:flex-row">
+      <div className="bg-white rounded-xl shadow border border-slate-200 p-6 md:p-8 relative flex flex-col">
+        <div className="hidden md:flex md:absolute md:top-6 md:right-6 flex-row gap-2">
           <button className="inline-flex items-center gap-2 rounded-md bg-white px-3 py-2 text-sm font-semibold text-slate-700 shadow-sm ring-1 ring-inset ring-slate-300 hover:bg-slate-50">
             <Share2 className="h-4 w-4" />
             <span>Teilen</span>
@@ -235,8 +235,16 @@ export default function PartyDetail() {
           <WatchButton id={id} type="party" label="Beobachten" />
         </div>
 
-        <div className="pr-32">
-          <h1 className="text-4xl font-bold text-slate-900">{party.name}</h1>
+        <div className="w-full md:pr-32">
+          <h1 className="text-3xl md:text-4xl font-bold text-slate-900">{party.name}</h1>
+        </div>
+        
+        <div className="flex md:hidden flex-row gap-2 justify-start mt-4">
+          <button className="inline-flex items-center gap-2 rounded-md bg-white px-3 py-2 text-sm font-semibold text-slate-700 shadow-sm ring-1 ring-inset ring-slate-300 hover:bg-slate-50">
+            <Share2 className="h-4 w-4" />
+            <span>Teilen</span>
+          </button>
+          <WatchButton id={id} type="party" label="Beobachten" />
         </div>
       </div>
 

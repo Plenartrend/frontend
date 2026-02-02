@@ -17,6 +17,8 @@ export default function PoliticianDetail() {
   const { updateBookmarkStats, isPoliticianWatched } = useWatchlist();
   const [politicianData, setPoliticianData] = useState<any>(null);
   const [similarPoliticians, setSimilarPoliticians] = useState<any[]>([]);
+  const [wordcloud, setWordcloud] = useState<Array<{ word: string; weight: number }>>([]);
+  const [wordcloudLoading, setWordcloudLoading] = useState(true);
   const [activityData, setActivityData] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadingSimilar, setLoadingSimilar] = useState(true);
@@ -164,6 +166,28 @@ export default function PoliticianDetail() {
       });
   }, [id, selectedPeriod, timeRange]);
 
+  // Fetch wordcloud data
+  useEffect(() => {
+    if (!id) return;
+
+    setWordcloudLoading(true);
+    fetch(`/api/v1/politicians/${id}/wordcloud`)
+      .then(res => res.json())
+      .then(data => {
+        // Sort by weight descending (already sorted by backend, but ensure it)
+        const sorted = Array.isArray(data)
+          ? [...data].sort((a, b) => b.weight - a.weight)
+          : [];
+        setWordcloud(sorted);
+        setWordcloudLoading(false);
+      })
+      .catch(err => {
+        console.error('Failed to fetch wordcloud:', err);
+        setWordcloud([]);
+        setWordcloudLoading(false);
+      });
+  }, [id]);
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-full py-20">
@@ -223,7 +247,7 @@ export default function PoliticianDetail() {
       </div>
 
       <div className="bg-white rounded-xl shadow border border-slate-200 p-6 md:p-8 flex flex-col md:flex-row gap-8 items-center relative">
-        <div className="absolute top-6 right-6 flex flex-col-reverse gap-2 md:flex-row">
+        <div className="hidden md:flex md:absolute md:top-6 md:right-6 flex-row gap-2">
           <button
             onClick={() => {
               navigator.clipboard.writeText(window.location.href);
@@ -254,9 +278,9 @@ export default function PoliticianDetail() {
              {politician.name.split(',')[0].split(' ').map((n: string) => n[0]).join('')}
           </div>
         </div>
-        <div className="flex-1 w-full">
+        <div className="flex-1 w-full flex flex-col justify-between">
           <div className="flex flex-col md:flex-row md:justify-between md:items-start gap-4">
-            <div className="pr-24 md:pr-0">
+            <div className="w-full md:pr-24">
                <div className="flex flex-wrap items-baseline gap-x-3 md:block">
                  <h1 className="text-3xl font-bold text-slate-900">{politician.name}</h1>
                  
@@ -273,6 +297,32 @@ export default function PoliticianDetail() {
                  </div>
                </div>
             </div>
+          </div>
+          
+          <div className="flex md:hidden flex-row gap-2 justify-start mt-4">
+            <button
+              onClick={() => {
+                navigator.clipboard.writeText(window.location.href);
+                setCopied(true);
+                setTimeout(() => setCopied(false), 2000);
+              }}
+              className="inline-flex items-center gap-2 rounded-md bg-white px-3 py-2 text-sm font-semibold text-slate-700 shadow-sm ring-1 ring-inset ring-slate-300 hover:bg-slate-50"
+            >
+              <Share2 className="h-4 w-4" />
+              <span>{copied ? 'Kopiert!' : 'Teilen'}</span>
+            </button>
+            <WatchButton
+              id={id}
+              type="politician"
+              label="Beobachten"
+              politicianStats={politicianData ? {
+                name: politicianData.name,
+                party: politicianData.party,
+                volatility: politicianData.volatility,
+                contributionFactor: politicianData.contributionFactor,
+                numSpeeches: politicianData.numSpeeches || politicianData.speeches?.length || 0,
+              } : undefined}
+            />
           </div>
         </div>
       </div>
@@ -429,18 +479,39 @@ export default function PoliticianDetail() {
 
          <div className="space-y-8">
              <div className="bg-white p-6 rounded-lg shadow border border-slate-100">
-               <h2 className="text-lg font-bold text-slate-900 mb-4">Wortcluster aus Reden</h2>
-               <div className="flex flex-wrap gap-2 justify-center">
-                  {['Zukunft', 'Verantwortung', 'Bürger', 'Europa', 'Innovation', 'Sicherheit', 'Wachstum', 'Klimaschutz', 'Zusammenhalt'].map((word, i) => (
-                    <span 
-                      key={word} 
-                      className="px-2 py-1 text-slate-600 font-medium"
-                      style={{ fontSize: `${Math.max(0.8, 1.4 - (Math.random() * 0.6))}rem`, color: i % 2 === 0 ? '#1e293b' : '#475569' }}
-                    >
-                      {word}
-                    </span>
-                  ))}
-               </div>
+               <h2 className="text-lg font-bold text-slate-900 mb-1">Wordcloud</h2>
+               <p className="text-sm text-slate-500 mb-4">Häufig in Reden vorkommende Begriffe</p>
+               {wordcloudLoading ? (
+                 <div className="flex justify-center py-4">
+                   <Loader2 className="h-5 w-5 animate-spin text-blue-600" />
+                 </div>
+               ) : wordcloud.length > 0 ? (
+                 <div className="flex flex-wrap gap-2 justify-center">
+                   {wordcloud.map((item, i) => {
+                     // Calculate font size based on weight (normalize to 0.8rem - 1.6rem range)
+                     const maxWeight = wordcloud[0]?.weight || 1;
+                     const minWeight = wordcloud[wordcloud.length - 1]?.weight || 0;
+                     const weightRange = maxWeight - minWeight || 1;
+                     const normalizedWeight = (item.weight - minWeight) / weightRange;
+                     const fontSize = 0.8 + (normalizedWeight * 0.8); // 0.8rem to 1.6rem
+
+                     return (
+                       <span
+                         key={`${item.word}-${i}`}
+                         className="px-2 py-1 text-slate-700 font-semibold"
+                         style={{
+                           fontSize: `${fontSize}rem`,
+                         }}
+                         title={`Gewicht: ${item.weight.toFixed(4)}`}
+                       >
+                         {item.word}
+                       </span>
+                     );
+                   })}
+                 </div>
+               ) : (
+                 <p className="text-sm text-slate-500 text-center py-4">Keine Wortcluster-Daten verfügbar.</p>
+               )}
             </div>
 
 
