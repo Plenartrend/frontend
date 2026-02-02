@@ -2,8 +2,7 @@
 
 import { Search, User, X, TrendingUp, TrendingDown, Minus, Loader2 } from "lucide-react";
 import Link from "next/link";
-import { useState, useMemo, useEffect } from "react";
-import { useInfiniteScroll } from "@/hooks/useInfiniteScroll";
+import { useState, useMemo, useEffect, useRef, useCallback } from "react";
 
 export default function ExplorerPoliticiansPage() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -12,6 +11,11 @@ export default function ExplorerPoliticiansPage() {
   const [loadingPeriods, setLoadingPeriods] = useState(true);
   const [parliamentaryGroups, setParliamentaryGroups] = useState<any[]>([]);
   const [selectedGroup, setSelectedGroup] = useState<number | null>(null);
+  const [selectedContribution, setSelectedContribution] = useState<string>("");
+  const [politicians, setPoliticians] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [displayCount, setDisplayCount] = useState(20);
+  const loadMoreRef = useRef<HTMLDivElement>(null);
 
   // Fetch election periods
   useEffect(() => {
@@ -63,32 +67,77 @@ export default function ExplorerPoliticiansPage() {
     }
   }, [selectedPeriod]);
 
-  // Build API URL with all filters
-  const fetchUrl = useMemo(() => {
-    let url = '/api/v1/politicians?';
-    if (selectedPeriod) url += `election_period=${selectedPeriod}&`;
-    if (selectedGroup) url += `group_id=${selectedGroup}&`;
-    return url.slice(0, -1); // Remove trailing &
-  }, [selectedPeriod, selectedGroup]);
+  // Fetch all politicians when election period changes
+  useEffect(() => {
+    if (!selectedPeriod) return;
 
-  const { data: politicians, loading, loadingMore, hasMore, loadMoreRef } = useInfiniteScroll<any>({
-    fetchUrl,
-    pageSize: 20,
-  });
+    setLoading(true);
+    // No page_size parameter - backend returns all politicians
+    fetch(`/api/v1/politicians?election_period=${selectedPeriod}`)
+      .then(res => res.json())
+      .then(data => {
+        if (data.data && Array.isArray(data.data)) {
+          setPoliticians(data.data);
+        } else {
+          console.error('Politicians response is invalid:', data);
+          setPoliticians([]);
+        }
+        setLoading(false);
+      })
+      .catch(err => {
+        console.error('Failed to fetch politicians', err);
+        setPoliticians([]);
+        setLoading(false);
+      });
+  }, [selectedPeriod]);
 
   const filteredPoliticians = useMemo(() => {
     return politicians.filter(p => {
-      const matchesSearch = p.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
-                            p.party.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                            p.role.toLowerCase().includes(searchQuery.toLowerCase());
-      return matchesSearch;
+      const matchesSearch = !searchQuery || 
+        p.name?.toLowerCase().includes(searchQuery.toLowerCase()) || 
+        p.party?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        p.role?.toLowerCase().includes(searchQuery.toLowerCase());
+      
+      const matchesGroup = !selectedGroup || p.party === parliamentaryGroups.find(g => g.id === selectedGroup)?.name;
+      
+      const matchesContribution = !selectedContribution || p.contributionFactor === selectedContribution;
+      
+      return matchesSearch && matchesGroup && matchesContribution;
     });
-  }, [searchQuery, politicians]);
+  }, [searchQuery, politicians, selectedGroup, selectedContribution, parliamentaryGroups]);
 
   const clearFilters = () => {
     setSearchQuery("");
     setSelectedGroup(null);
+    setSelectedContribution("");
   };
+
+  // Reset display count when filters change
+  useEffect(() => {
+    setDisplayCount(20);
+  }, [searchQuery, selectedGroup, selectedContribution]);
+
+  // Infinite scroll observer
+  useEffect(() => {
+    if (!loadMoreRef.current) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && displayCount < filteredPoliticians.length) {
+          setDisplayCount(prev => Math.min(prev + 20, filteredPoliticians.length));
+        }
+      },
+      { rootMargin: '100px' }
+    );
+
+    observer.observe(loadMoreRef.current);
+
+    return () => observer.disconnect();
+  }, [displayCount, filteredPoliticians.length]);
+
+  const displayedPoliticians = useMemo(() => {
+    return filteredPoliticians.slice(0, displayCount);
+  }, [filteredPoliticians, displayCount]);
 
   if (loading) {
     return (
@@ -125,7 +174,7 @@ export default function ExplorerPoliticiansPage() {
               {filteredPoliticians.length} Ergebnisse
             </div>
 
-            {(searchQuery || selectedGroup) && (
+            {(searchQuery || selectedGroup || selectedContribution) && (
               <button 
                 onClick={clearFilters}
                 className="inline-flex items-center gap-1 px-3 py-1.5 text-sm text-slate-500 hover:text-red-600 hover:bg-red-50 rounded-md transition-colors"
@@ -165,11 +214,22 @@ export default function ExplorerPoliticiansPage() {
               <option key={group.id} value={group.id}>{group.name}</option>
             ))}
           </select>
+
+          <select
+            value={selectedContribution}
+            onChange={(e) => setSelectedContribution(e.target.value)}
+            className="rounded-md border-0 py-2 px-3 text-slate-900 ring-1 ring-inset ring-slate-300 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:text-sm bg-white shadow-sm"
+          >
+            <option value="">Alle Beiträge</option>
+            <option value="low">Gering</option>
+            <option value="medium">Mittel</option>
+            <option value="high">Hoch</option>
+          </select>
         </div>
       </div>
 
       <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-        {filteredPoliticians.map((politician: any) => (
+        {displayedPoliticians.map((politician: any) => (
           <Link key={politician.id} href={`/politicians/${politician.id}`} className="group">
             <div className="flex flex-col h-full overflow-hidden rounded-lg bg-white shadow transition-all duration-200 hover:shadow-lg hover:-translate-y-1 border border-slate-100 ring-1 ring-slate-200 hover:ring-blue-500/50">
               <div className="p-5 flex-1">
@@ -239,15 +299,21 @@ export default function ExplorerPoliticiansPage() {
       </div>
 
       {/* Infinite scroll trigger */}
-      {hasMore && !searchQuery && (
+      {displayCount < filteredPoliticians.length && (
         <div ref={loadMoreRef} className="flex justify-center py-8">
-          {loadingMore && <Loader2 className="h-8 w-8 animate-spin text-blue-600" />}
+          <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
         </div>
       )}
 
-      {!loading && !hasMore && politicians.length > 0 && !searchQuery && (
+      {!loading && filteredPoliticians.length === 0 && (
+        <div className="text-center py-12 text-slate-500">
+          Keine Abgeordnete gefunden
+        </div>
+      )}
+
+      {!loading && displayCount >= filteredPoliticians.length && filteredPoliticians.length > 0 && (
         <div className="text-center py-8 text-sm text-slate-500">
-          Alle Abgeordnete geladen
+          Alle {filteredPoliticians.length} Abgeordnete geladen
         </div>
       )}
     </div>

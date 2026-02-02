@@ -4,25 +4,19 @@ const API_BASE_URL = process.env.API_BASE_URL || 'http://localhost:8080';
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
-  const offset = searchParams.get('offset') || '0';
-  const pageSize = searchParams.get('page_size') || '20';
+  const offset = searchParams.get('offset');
+  const pageSize = searchParams.get('page_size');
   const electionPeriod = searchParams.get('election_period');
   const groupId = searchParams.get('group_id');
 
   try {
-    // Build URL with query parameters
-    const params = new URLSearchParams({
-      offset,
-      page_size: pageSize,
-    });
+    // Build URL with query parameters - only add params that are provided
+    const params = new URLSearchParams();
     
-    if (electionPeriod) {
-      params.append('election_period', electionPeriod);
-    }
-
-    if (groupId) {
-      params.append('group_id', groupId);
-    }
+    if (offset) params.append('offset', offset);
+    if (pageSize) params.append('page_size', pageSize);
+    if (electionPeriod) params.append('election_period', electionPeriod);
+    if (groupId) params.append('group_id', groupId);
 
     const url = `${API_BASE_URL}/politicians?${params.toString()}`;
     
