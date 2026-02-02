@@ -197,7 +197,7 @@ export default function ExplorerPoliticiansPage() {
                         {politician.topTopics.slice(0, 3).map((t: any, i: number) => (
                           <span 
                             key={i} 
-                            className="inline-flex items-center rounded-full bg-blue-50 px-2.5 py-0.5 text-xs font-medium text-blue-700 ring-1 ring-inset ring-blue-700/10 hover:bg-blue-100 transition-colors max-w-[120px] truncate"
+                            className="inline-block rounded-full bg-blue-50 px-2.5 py-0.5 text-xs font-medium text-blue-700 ring-1 ring-inset ring-blue-700/10 hover:bg-blue-100 transition-colors max-w-[120px] truncate overflow-hidden"
                             title={t.topic}
                           >
                             {t.topic}
