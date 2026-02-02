@@ -5,14 +5,16 @@ import { ChevronRight, Share2, Activity, Award, BarChart3, Users, Mic, Calendar,
 import Link from "next/link";
 import { useParams, useSearchParams, useRouter } from "next/navigation";
 import { WatchButton } from "@/components/ui/WatchButton";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { BackButton } from "@/components/ui/BackButton";
+import { useWatchlist } from "@/context/WatchlistContext";
 
 export default function PoliticianDetail() {
   const params = useParams();
   const searchParams = useSearchParams();
   const router = useRouter();
   const id = params?.id as string;
+  const { updateBookmarkStats, isPoliticianWatched } = useWatchlist();
   const [politicianData, setPoliticianData] = useState<any>(null);
   const [similarPoliticians, setSimilarPoliticians] = useState<any[]>([]);
   const [activityData, setActivityData] = useState<any[]>([]);
@@ -25,6 +27,20 @@ export default function PoliticianDetail() {
   const [loadingPeriods, setLoadingPeriods] = useState(true);
   const [timeRange, setTimeRange] = useState<string>('last_year');
   const [copied, setCopied] = useState(false);
+    const hasUpdatedVisit = useRef(false);
+
+    useEffect(() => {
+        if (id && politicianData && !hasUpdatedVisit.current && isPoliticianWatched(id)) {
+            updateBookmarkStats(id, 'politician', {
+                name: politicianData.name,
+                party: politicianData.party,
+                volatility: politicianData.volatility,
+                contributionFactor: politicianData.contributionFactor,
+                numSpeeches: politicianData.numSpeeches || politicianData.speeches?.length || 0,
+            });
+            hasUpdatedVisit.current = true;
+        }
+    }, [id, politicianData, isPoliticianWatched, updateBookmarkStats]);
 
   const timeRangeOptions = [
     { value: 'last_6_months', label: 'Letzte 6 Monate' },
@@ -55,7 +71,7 @@ export default function PoliticianDetail() {
         if (Array.isArray(data)) {
           const filtered = data.filter(p => p.number > 0);
           setElectionPeriods(filtered);
-          
+
           // Check for election_period in URL params
           const urlPeriod = searchParams.get('election_period');
           if (urlPeriod) {
@@ -85,11 +101,11 @@ export default function PoliticianDetail() {
 
     setLoading(true);
     setLoadingSimilar(true);
-    
+
     const queryParams = new URLSearchParams();
     queryParams.set('election_period', selectedPeriod.toString());
     queryParams.set('time_range', timeRange);
-    
+
     // Fetch main politician data
     fetch(`/api/v1/politicians/${id}?${queryParams.toString()}`)
       .then(res => {
@@ -110,7 +126,7 @@ export default function PoliticianDetail() {
     // Fetch similar politicians separately
     const similarParams = new URLSearchParams();
     similarParams.set('election_period', selectedPeriod.toString());
-    
+
     fetch(`/api/v1/politicians/${id}/similar?${similarParams.toString()}`)
       .then(res => res.ok ? res.json() : [])
       .then(data => {
@@ -129,7 +145,7 @@ export default function PoliticianDetail() {
     if (!id || selectedPeriod === null) return;
 
     setLoadingActivity(true);
-    
+
     const queryParams = new URLSearchParams();
     queryParams.set('election_period', selectedPeriod.toString());
     queryParams.set('time_range', timeRange);
@@ -208,7 +224,7 @@ export default function PoliticianDetail() {
 
       <div className="bg-white rounded-xl shadow border border-slate-200 p-6 md:p-8 flex flex-col md:flex-row gap-8 items-center relative">
         <div className="absolute top-6 right-6 flex flex-col-reverse gap-2 md:flex-row">
-          <button 
+          <button
             onClick={() => {
               navigator.clipboard.writeText(window.location.href);
               setCopied(true);
@@ -219,7 +235,18 @@ export default function PoliticianDetail() {
             <Share2 className="h-4 w-4" />
             <span>{copied ? 'Kopiert!' : 'Profil Teilen'}</span>
           </button>
-          <WatchButton id={id} type="politician" label="Beobachten" />
+          <WatchButton
+            id={id}
+            type="politician"
+            label="Beobachten"
+            politicianStats={politicianData ? {
+              name: politicianData.name,
+              party: politicianData.party,
+              volatility: politicianData.volatility,
+              contributionFactor: politicianData.contributionFactor,
+              numSpeeches: politicianData.numSpeeches || politicianData.speeches?.length || 0,
+            } : undefined}
+          />
         </div>
 
         <div className="flex-shrink-0">
@@ -310,8 +337,8 @@ export default function PoliticianDetail() {
                       {item.sentiment !== undefined && item.sentiment !== null ? (
                         <>
                           <div className="mt-3 h-2 bg-slate-100 rounded-full overflow-hidden">
-                            <div 
-                              className={`h-full ${item.sentiment >= 0 ? 'bg-green-500' : 'bg-red-500'}`} 
+                            <div
+                              className={`h-full ${item.sentiment >= 0 ? 'bg-green-500' : 'bg-red-500'}`}
                               style={{ width: `${Math.abs(item.sentiment) * 100}%` }}
                             ></div>
                           </div>
@@ -366,11 +393,11 @@ export default function PoliticianDetail() {
                     {politicianSpeeches.map((speech: any) => {
                       const fullText = speech.text || '';
                       const isExpanded = expandedSpeeches.has(speech.id);
-                      const truncatedText = fullText.length > 400 
-                        ? fullText.substring(0, 400).trim() + '...' 
+                      const truncatedText = fullText.length > 400
+                        ? fullText.substring(0, 400).trim() + '...'
                         : fullText;
                       const isTruncated = fullText.length > 400;
-                      
+
                       return (
                         <li key={speech.id} className="bg-slate-50 p-4 rounded-lg relative hover:bg-slate-100 transition-colors">
                           <p className="text-sm text-slate-700">
@@ -420,7 +447,7 @@ export default function PoliticianDetail() {
              <div className="bg-white p-6 rounded-lg shadow border border-slate-100">
                 <h2 className="text-lg font-bold text-slate-900 mb-4">Ähnliche Abgeordnete</h2>
                 <p className="text-sm text-slate-500 mb-4">Abgeordnete mit ähnlicher Haltung zu den Herzensthemen</p>
-               
+
                {loadingSimilar ? (
                  <div className="flex justify-center items-center h-24">
                    <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>

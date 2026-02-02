@@ -1,23 +1,16 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 
-interface UseInfiniteScrollOptions<T> {
+interface UseInfiniteScrollOptions {
   fetchUrl: string;
   pageSize?: number;
   enabled?: boolean;
-}
-
-interface PaginatedResponse<T> {
-  data: T[];
-  page: number;
-  page_size: number;
-  total_items: number;
 }
 
 export function useInfiniteScroll<T>({ 
   fetchUrl, 
   pageSize = 20,
   enabled = true 
-}: UseInfiniteScrollOptions<T>) {
+}: UseInfiniteScrollOptions) {
   const [data, setData] = useState<T[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);

@@ -6,6 +6,7 @@ import { cn } from "@/lib/utils";
 import { Compass, Flag, FileText, Bell, Bookmark, Star, CalendarDays, Loader2, ChevronDown, ChevronRight, Mic, User, Hash, X } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { useWatchlist } from "@/context/WatchlistContext";
+import { useNotifications } from "@/context/NotificationContext";
 import { useEffect, useState } from "react";
 
 interface SidebarProps {
@@ -13,17 +14,32 @@ interface SidebarProps {
   onClose?: () => void;
 }
 
+interface SessionStatus {
+  live: boolean;
+  sitzungsnummer?: string | number;
+  datum: string;
+  nextDatum?: string;
+}
+
 export function Sidebar({ isOpen = false, onClose }: SidebarProps) {
   const pathname = usePathname();
   const { user } = useAuth();
-  const { watchedTopics, watchedPoliticians } = useWatchlist();
-  const [sessionStatus, setSessionStatus] = useState<any>(null);
-  const [quickAccess, setQuickAccess] = useState<{topics: any[], politicians: any[]} | null>(null);
+  const { bookmarks } = useWatchlist();
+  const { unreadCount } = useNotifications();
+  const [sessionStatus, setSessionStatus] = useState<SessionStatus | null>(null);
   const [isQuickAccessExpanded, setIsQuickAccessExpanded] = useState(true);
   const [isExplorerExpanded, setIsExplorerExpanded] = useState(true);
   const [mounted, setMounted] = useState(false);
 
   const isExplorerActive = pathname.startsWith('/explorer');
+
+  const recentBookmarks = [...(bookmarks || [])]
+    .sort((a, b) => {
+      const timeA = a.lastVisited ? new Date(a.lastVisited).getTime() : 0;
+      const timeB = b.lastVisited ? new Date(b.lastVisited).getTime() : 0;
+      return timeB - timeA;
+    })
+    .slice(0, 3);
 
   // Prevent hydration mismatch
   useEffect(() => {
@@ -42,23 +58,7 @@ export function Sidebar({ isOpen = false, onClose }: SidebarProps) {
       .then(res => res.json())
       .then(setSessionStatus)
       .catch(err => console.error("Status fetch failed", err));
-
-    if (user && (watchedTopics.length > 0 || watchedPoliticians.length > 0)) {
-      Promise.all([
-        fetch('/api/v1/topics').then(r => r.json()),
-        fetch('/api/v1/politicians').then(r => r.json())
-      ]).then(([topicsData, allPols]) => {
-        const allTopics = topicsData.data || topicsData; // Handle both {data: []} and [] response formats
-        setQuickAccess({
-          topics: Array.isArray(allTopics) ? allTopics.filter((t: any) => watchedTopics.includes(t.id)).slice(0, 3) : [],
-          politicians: Array.isArray(allPols) ? allPols.filter((p: any) => watchedPoliticians.includes(p.id)).slice(0, 3) : []
-        });
-      }).catch(err => {
-        console.error('Failed to fetch quick access data:', err);
-        setQuickAccess({ topics: [], politicians: [] });
-      });
-    }
-  }, [user, watchedTopics, watchedPoliticians]);
+  }, [user]);
 
   return (
     <>
@@ -139,17 +139,33 @@ export function Sidebar({ isOpen = false, onClose }: SidebarProps) {
             )}
           </div>
 
+          <Link
+            href="/watchlist"
+            className={cn(
+              "group flex items-center rounded-md px-3 py-2 text-base font-medium transition-colors",
+              pathname === '/watchlist' ? "bg-slate-800 text-white" : "text-slate-300 hover:bg-slate-800 hover:text-white"
+            )}
+          >
+            <Bookmark className={cn("mr-3 h-6 w-6 flex-shrink-0", pathname === '/watchlist' ? "text-blue-400" : "text-slate-400 group-hover:text-white")} />
+            Merkliste
+          </Link>
+
           {mounted && user && (
             <>
               <Link
-                href="/watchlist"
+                href="/notifications"
                 className={cn(
-                  "group flex items-center rounded-md px-3 py-2 text-base font-medium transition-colors",
-                  pathname === '/watchlist' ? "bg-slate-800 text-white" : "text-slate-300 hover:bg-slate-800 hover:text-white"
+                  "group flex items-center rounded-md px-3 py-2 text-base font-medium transition-colors relative",
+                  pathname === '/notifications' ? "bg-slate-800 text-white" : "text-slate-300 hover:bg-slate-800 hover:text-white"
                 )}
               >
-                <Bookmark className="mr-3 h-6 w-6 flex-shrink-0 text-slate-400 group-hover:text-white" />
-                Merkliste
+                <Star className="mr-3 h-6 w-6 flex-shrink-0 text-slate-400 group-hover:text-white" />
+                Bookmark Updates
+                {unreadCount > 0 && (
+                  <span className="ml-auto inline-flex items-center justify-center h-5 w-5 rounded-full bg-red-500 text-white text-xs font-bold">
+                    {unreadCount > 9 ? '9+' : unreadCount}
+                  </span>
+                )}
               </Link>
               <Link
                 href="/campaigns"
@@ -184,7 +200,7 @@ export function Sidebar({ isOpen = false, onClose }: SidebarProps) {
             </>
           )}
 
-          {user && quickAccess && (quickAccess.topics.length > 0 || quickAccess.politicians.length > 0) && (
+          {mounted && recentBookmarks.length > 0 && (
             <div className="pt-6 mt-6 border-t border-slate-800">
               <button 
                 onClick={() => setIsQuickAccessExpanded(!isQuickAccessExpanded)}
@@ -196,28 +212,21 @@ export function Sidebar({ isOpen = false, onClose }: SidebarProps) {
               
               {isQuickAccessExpanded && (
                 <div className="space-y-1">
-                                  {quickAccess.topics.map((topic: any) => (
-                                    <Link
-                                      key={topic.id}
-                                      href={`/topics/${topic.id}`}
-                                      className="group flex items-center rounded-md px-3 py-2 text-base font-medium text-slate-300 hover:bg-slate-800 hover:text-white"
-                                    >
-                                      <Star className="mr-3 h-4 w-4 text-slate-500 group-hover:text-yellow-400" />
-                                      <span className="truncate">{topic.title}</span>
-                                    </Link>
-                                  ))}
-                                  {quickAccess.politicians.map((pol: any) => (
-                                    <Link
-                                      key={pol.id}
-                                      href={`/politicians/${pol.id}`}
-                                      className="group flex items-center rounded-md px-3 py-2 text-base font-medium text-slate-300 hover:bg-slate-800 hover:text-white"
-                                    >
-                                      <div className="mr-3 h-4 w-4 rounded-full bg-slate-600 flex items-center justify-center text-[8px] text-white">
-                                        {pol.name.charAt(0)}
-                                      </div>
-                                      <span className="truncate">{pol.name}</span>
-                                    </Link>
-                                  ))}                </div>
+                  {recentBookmarks.map((bookmark) => (
+                    <Link
+                      key={`${bookmark.type}-${bookmark.id}`}
+                      href={bookmark.type === 'topic' ? `/topics/${bookmark.id}` : `/politicians/${bookmark.id}`}
+                      className="group flex items-center rounded-md px-3 py-2 text-base font-medium text-slate-300 hover:bg-slate-800 hover:text-white"
+                    >
+                      <Star className="mr-3 h-4 w-4 text-yellow-400 fill-yellow-400" />
+                      <span className="truncate">
+                        {bookmark.type === 'topic'
+                          ? (bookmark.title || "Unbekanntes Thema")
+                          : (bookmark.name || "Unbekannter Abgeordneter")}
+                      </span>
+                    </Link>
+                  ))}
+                </div>
               )}
             </div>
           )}

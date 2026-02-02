@@ -3,6 +3,24 @@ export interface TrendDataPoint {
   value: number;
 }
 
+export interface BookmarkItem {
+  id: string;
+  type: 'topic' | 'politician';
+  bookmarkedAt: string;
+  lastVisited: string;
+}
+
+export interface BookmarkNotification {
+  id: string;
+  bookmarkId: string;
+  type: 'topic' | 'politician';
+  title: string;
+  message: string;
+  timestamp: string;
+  isRead: boolean;
+  targetUrl: string;
+}
+
 export interface SpeechSnippet {
   id: string;
   topicId: string;
