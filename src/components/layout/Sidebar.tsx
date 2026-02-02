@@ -126,6 +126,16 @@ export function Sidebar({ isOpen = false, onClose }: SidebarProps) {
                   Abgeordnete
                 </Link>
                 <Link
+                  href="/explorer/parties"
+                  className={cn(
+                    "group flex items-center rounded-md px-3 py-2 text-base font-medium transition-colors",
+                    pathname.startsWith('/explorer/parties') ? "bg-slate-800 text-white" : "text-slate-400 hover:text-white"
+                  )}
+                >
+                  <Flag className="mr-3 h-4 w-4 flex-shrink-0 opacity-70" />
+                  Parteien
+                </Link>
+                <Link
                   href="/explorer/speeches"
                   className={cn(
                     "group flex items-center rounded-md px-3 py-2 text-base font-medium transition-colors",
