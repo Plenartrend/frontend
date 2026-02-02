@@ -4,7 +4,7 @@ import { createContext, useContext, useState, useEffect, ReactNode, useMemo, use
 
 export interface BookmarkItem {
   id: string;
-  type: 'topic' | 'politician';
+  type: 'topic' | 'politician' | 'party';
   bookmarkedAt: string;
   lastVisited: string;
 
@@ -33,17 +33,27 @@ export interface PoliticianStats {
   numSpeeches?: number;
 }
 
+export interface PartyStats {
+  name: string;
+  volatility?: string;
+  contributionFactor?: string;
+  numSpeeches?: number;
+}
+
 interface WatchlistContextType {
   watchedTopics: string[];
   watchedPoliticians: string[];
+  watchedParties: string[];
   bookmarks: BookmarkItem[];
   toggleTopic: (id: string, topicStats?: TopicStats) => void;
   togglePolitician: (id: string, politicianStats?: PoliticianStats) => void;
+  toggleParty: (id: string, partyStats?: PartyStats) => void;
   isTopicWatched: (id: string) => boolean;
   isPoliticianWatched: (id: string) => boolean;
-  updateLastVisited: (id: string, type: 'topic' | 'politician') => void;
-  updateBookmarkStats: (id: string, type: 'topic' | 'politician', stats: Partial<BookmarkItem>) => void;
-  getBookmark: (id: string, type: 'topic' | 'politician') => BookmarkItem | undefined;
+  isPartyWatched: (id: string) => boolean;
+  updateLastVisited: (id: string, type: 'topic' | 'politician' | 'party') => void;
+  updateBookmarkStats: (id: string, type: 'topic' | 'politician' | 'party', stats: Partial<BookmarkItem>) => void;
+  getBookmark: (id: string, type: 'topic' | 'politician' | 'party') => BookmarkItem | undefined;
 }
 
 const WatchlistContext = createContext<WatchlistContextType | undefined>(undefined);
@@ -57,6 +67,10 @@ export function WatchlistProvider({ children }: { children: ReactNode }) {
 
   const watchedPoliticians = useMemo(() => {
     return bookmarks.filter(b => b.type === 'politician').map(b => b.id);
+  }, [bookmarks]);
+
+  const watchedParties = useMemo(() => {
+    return bookmarks.filter(b => b.type === 'party').map(b => b.id);
   }, [bookmarks]);
 
   useEffect(() => {
@@ -125,7 +139,36 @@ export function WatchlistProvider({ children }: { children: ReactNode }) {
     });
   }, []);
 
-  const updateLastVisited = useCallback((id: string, type: 'topic' | 'politician') => {
+  const toggleParty = useCallback((id: string, partyStats?: PartyStats) => {
+    const now = new Date().toISOString();
+    const idStr = String(id);
+
+    setBookmarks(prevBookmarks => {
+      const isCurrentlyWatched = prevBookmarks.some(b => b.id === idStr && b.type === 'party');
+      let newBookmarks: BookmarkItem[];
+
+      if (isCurrentlyWatched) {
+        newBookmarks = prevBookmarks.filter(b => !(b.id === idStr && b.type === 'party'));
+      } else {
+        newBookmarks = [...prevBookmarks, {
+          id: idStr,
+          type: 'party',
+          bookmarkedAt: now,
+          lastVisited: now,
+          // Store party stats when bookmarking
+          name: partyStats?.name,
+          volatility: partyStats?.volatility,
+          contributionFactor: partyStats?.contributionFactor,
+          numSpeeches: partyStats?.numSpeeches,
+        }];
+      }
+
+      localStorage.setItem('plenartrend_bookmarks', JSON.stringify(newBookmarks));
+      return newBookmarks;
+    });
+  }, []);
+
+  const updateLastVisited = useCallback((id: string, type: 'topic' | 'politician' | 'party') => {
     const now = new Date().toISOString();
     const idStr = String(id);
 
@@ -140,7 +183,7 @@ export function WatchlistProvider({ children }: { children: ReactNode }) {
     });
   }, []);
 
-  const updateBookmarkStats = useCallback((id: string, type: 'topic' | 'politician', stats: Partial<BookmarkItem>) => {
+  const updateBookmarkStats = useCallback((id: string, type: 'topic' | 'politician' | 'party', stats: Partial<BookmarkItem>) => {
     const idStr = String(id);
     const now = new Date().toISOString();
 
@@ -155,7 +198,7 @@ export function WatchlistProvider({ children }: { children: ReactNode }) {
     });
   }, []);
 
-  const getBookmark = useCallback((id: string, type: 'topic' | 'politician') => {
+  const getBookmark = useCallback((id: string, type: 'topic' | 'politician' | 'party') => {
     const idStr = String(id);
     return bookmarks.find(b => b.id === idStr && b.type === type);
   }, [bookmarks]);
@@ -170,15 +213,23 @@ export function WatchlistProvider({ children }: { children: ReactNode }) {
     return watchedPoliticians.includes(idStr);
   }, [watchedPoliticians]);
 
+  const isPartyWatched = useCallback((id: string) => {
+    const idStr = String(id);
+    return watchedParties.includes(idStr);
+  }, [watchedParties]);
+
   return (
     <WatchlistContext.Provider value={{
       watchedTopics,
       watchedPoliticians,
+      watchedParties,
       bookmarks,
       toggleTopic,
       togglePolitician,
+      toggleParty,
       isTopicWatched,
       isPoliticianWatched,
+      isPartyWatched,
       updateLastVisited,
       updateBookmarkStats,
       getBookmark
