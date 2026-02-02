@@ -1,16 +1,18 @@
 "use client";
 
 import { TrendChart } from "@/components/ui/TrendChart";
-import { ChevronRight, Share2, Mic, ExternalLink, Loader2 } from "lucide-react";
+import { ChevronRight, Share2, Mic, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { WatchButton } from "@/components/ui/WatchButton";
 import { BackButton } from "@/components/ui/BackButton";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
+import { useWatchlist } from "@/context/WatchlistContext";
 
 export default function TopicDetail() {
   const params = useParams();
   const id = params?.id as string;
+  const { updateBookmarkStats, isTopicWatched } = useWatchlist();
   const [topicData, setTopicData] = useState<any>(null);
   const [trendData, setTrendData] = useState<any[]>([]);
   const [positionData, setPositionData] = useState<any[]>([]);
@@ -18,6 +20,7 @@ export default function TopicDetail() {
   const [error, setError] = useState(false);
   const [expandedSpeeches, setExpandedSpeeches] = useState<Set<string>>(new Set());
   const [timeRange, setTimeRange] = useState<string>('last_6_months');
+  const hasUpdatedVisit = useRef(false);
 
   const [chartsLoading, setChartsLoading] = useState(true);
 
@@ -41,6 +44,17 @@ export default function TopicDetail() {
       return newSet;
     });
   };
+
+  useEffect(() => {
+    if (id && topicData && !hasUpdatedVisit.current && isTopicWatched(id)) {
+      updateBookmarkStats(id, 'topic', {
+        title: topicData.title,
+        relevance: topicData.relevance,
+        sentiment: topicData.sentiment,
+      });
+      hasUpdatedVisit.current = true;
+    }
+  }, [id, topicData, isTopicWatched, updateBookmarkStats]);
 
   useEffect(() => {
     if (!id) return;
@@ -152,7 +166,16 @@ export default function TopicDetail() {
             <Share2 className="h-4 w-4" />
             Teilen
           </button>
-          <WatchButton id={id} type="topic" label="Thema folgen" />
+          <WatchButton
+            id={id}
+            type="topic"
+            label="Thema folgen"
+            topicStats={topicData ? {
+              title: topicData.title,
+              relevance: topicData.relevance || 0,
+              sentiment: topicData.sentiment || 0
+            } : undefined}
+          />
         </div>
       </div>
 
@@ -251,7 +274,7 @@ export default function TopicDetail() {
                   return (
                     <li key={speech.id} className="bg-slate-50 p-4 rounded-lg relative hover:bg-slate-100 transition-colors">
                       <p className="text-sm text-slate-700 italic">
-                        "{isExpanded ? fullText : truncatedText}"
+                        &#34;{isExpanded ? fullText : truncatedText}&#34;
                       </p>
                       <div className="mt-2 flex items-center justify-between text-xs">
                          <span className="font-semibold text-slate-900">{speech.speaker} ({speech.party})</span>

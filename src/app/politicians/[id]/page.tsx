@@ -5,16 +5,32 @@ import { ChevronRight, Share2, Activity, Award, BarChart3, Users, Mic, Calendar,
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { WatchButton } from "@/components/ui/WatchButton";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { BackButton } from "@/components/ui/BackButton";
 import { POLITICIANS, SPEECHES } from "@/lib/mockData";
+import { useWatchlist } from "@/context/WatchlistContext";
 
 export default function PoliticianDetail() {
   const params = useParams();
   const id = params?.id as string;
+  const { updateBookmarkStats, isPoliticianWatched } = useWatchlist();
   const [politicianData, setPoliticianData] = useState<any>(null);
   const [similarPoliticians, setSimilarPoliticians] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const hasUpdatedVisit = useRef(false);
+
+  useEffect(() => {
+    if (id && politicianData && !hasUpdatedVisit.current && isPoliticianWatched(id)) {
+      updateBookmarkStats(id, 'politician', {
+        name: politicianData.name,
+        party: politicianData.party,
+        volatility: politicianData.volatility,
+        contributionFactor: politicianData.contributionFactor,
+        numSpeeches: politicianData.numSpeeches || politicianData.speeches?.length || 0,
+      });
+      hasUpdatedVisit.current = true;
+    }
+  }, [id, politicianData, isPoliticianWatched, updateBookmarkStats]);
 
   useEffect(() => {
     if (!id) return;
@@ -35,7 +51,8 @@ export default function PoliticianDetail() {
       setPoliticianData({
         ...politician,
         activityData,
-        speeches: politicianSpeeches
+        speeches: politicianSpeeches,
+        numSpeeches: politicianSpeeches.length
       });
 
       // Get similar politicians
@@ -81,7 +98,18 @@ export default function PoliticianDetail() {
             <Share2 className="h-4 w-4" />
             <span>Profil Teilen</span>
           </button>
-          <WatchButton id={id} type="politician" label="Beobachten" />
+          <WatchButton
+            id={id}
+            type="politician"
+            label="Beobachten"
+            politicianStats={politicianData ? {
+              name: politicianData.name,
+              party: politicianData.party,
+              volatility: politicianData.volatility,
+              contributionFactor: politicianData.contributionFactor,
+              numSpeeches: politicianData.numSpeeches || politicianData.speeches?.length || 0,
+            } : undefined}
+          />
         </div>
 
         <div className="flex-shrink-0">
