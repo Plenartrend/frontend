@@ -13,7 +13,10 @@ export default function PoliticianDetail() {
   const id = params?.id as string;
   const [politicianData, setPoliticianData] = useState<any>(null);
   const [similarPoliticians, setSimilarPoliticians] = useState<any[]>([]);
+  const [activityData, setActivityData] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadingSimilar, setLoadingSimilar] = useState(true);
+  const [loadingActivity, setLoadingActivity] = useState(true);
   const [expandedSpeeches, setExpandedSpeeches] = useState<Set<string>>(new Set());
   const [electionPeriods, setElectionPeriods] = useState<any[]>([]);
   const [selectedPeriod, setSelectedPeriod] = useState<number | null>(null);
@@ -68,11 +71,14 @@ export default function PoliticianDetail() {
     if (!id || selectedPeriod === null) return;
 
     setLoading(true);
+    setLoadingSimilar(true);
+    setLoadingActivity(true);
     
     const queryParams = new URLSearchParams();
     queryParams.set('election_period', selectedPeriod.toString());
     queryParams.set('time_range', timeRange);
     
+    // Fetch main politician data
     fetch(`/api/v1/politicians/${id}?${queryParams.toString()}`)
       .then(res => {
         if (!res.ok) {
@@ -82,25 +88,40 @@ export default function PoliticianDetail() {
       })
       .then(data => {
         setPoliticianData(data);
-        
-        // Fetch similar politicians from their IDs
-        if (data.similar && Array.isArray(data.similar) && data.similar.length > 0) {
-          const similarPromises = data.similar.slice(0, 3).map((similarId: string) =>
-            fetch(`/api/v1/politicians/${similarId}?election_period=${selectedPeriod}`)
-              .then(res => res.ok ? res.json() : null)
-              .catch(() => null)
-          );
-          Promise.all(similarPromises).then(results => {
-            setSimilarPoliticians(results.filter((p: any) => p !== null));
-          });
-        } else {
-          setSimilarPoliticians([]);
-        }
         setLoading(false);
       })
       .catch(err => {
         console.error('Failed to fetch politician:', err);
         setLoading(false);
+      });
+
+    // Fetch similar politicians separately
+    const similarParams = new URLSearchParams();
+    similarParams.set('election_period', selectedPeriod.toString());
+    
+    fetch(`/api/v1/politicians/${id}/similar?${similarParams.toString()}`)
+      .then(res => res.ok ? res.json() : [])
+      .then(data => {
+        setSimilarPoliticians(data || []);
+        setLoadingSimilar(false);
+      })
+      .catch(err => {
+        console.error('Failed to fetch similar politicians:', err);
+        setSimilarPoliticians([]);
+        setLoadingSimilar(false);
+      });
+
+    // Fetch activity data separately
+    fetch(`/api/v1/politicians/${id}/activity?${queryParams.toString()}`)
+      .then(res => res.ok ? res.json() : [])
+      .then(data => {
+        setActivityData(data || []);
+        setLoadingActivity(false);
+      })
+      .catch(err => {
+        console.error('Failed to fetch activity data:', err);
+        setActivityData([]);
+        setLoadingActivity(false);
       });
   }, [id, selectedPeriod, timeRange]);
 
@@ -124,7 +145,7 @@ export default function PoliticianDetail() {
     );
   }
 
-  const { speeches: politicianSpeeches, activityData, ...politician } = politicianData;
+  const { speeches: politicianSpeeches, ...politician } = politicianData;
 
   return (
     <div className="space-y-8">
@@ -285,8 +306,16 @@ export default function PoliticianDetail() {
                    ))}
                  </select>
                </div>
-               <TrendChart data={activityData} yAxisLabel="Aktivitätsindex" interactive={false} />
-               <p className="text-xs text-slate-400 mt-2 text-center">Kombinierte Metrik aus Reden, Anfragen und Abstimmungen.</p>
+               {loadingActivity ? (
+                 <div className="flex justify-center items-center h-64">
+                   <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                 </div>
+               ) : (
+                 <>
+                   <TrendChart data={activityData} yAxisLabel="Aktivitätsindex" interactive={false} />
+                   <p className="text-xs text-slate-400 mt-2 text-center">Kombinierte Metrik aus Reden, Anfragen und Abstimmungen.</p>
+                 </>
+               )}
             </div>
 
              {/* Speeches Section */}
@@ -355,7 +384,11 @@ export default function PoliticianDetail() {
                 <h2 className="text-lg font-bold text-slate-900 mb-4">Ähnliche Abgeordnete</h2>
                 <p className="text-sm text-slate-500 mb-4">Abgeordnete mit ähnlicher Haltung zu den Herzensthemen</p>
                
-               {similarPoliticians.length > 0 ? (
+               {loadingSimilar ? (
+                 <div className="flex justify-center items-center h-24">
+                   <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
+                 </div>
+               ) : similarPoliticians.length > 0 ? (
                   <ul className="space-y-2">
                      {similarPoliticians.map((sim: any) => (
                        <li key={sim.id} className="flex items-center gap-2 text-sm">
