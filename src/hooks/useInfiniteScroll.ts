@@ -42,7 +42,8 @@ export function useInfiniteScroll<T>({
     setError(null);
 
     try {
-      const url = `${fetchUrl}?offset=${currentOffset}&page_size=${pageSize}`;
+      const separator = fetchUrl.includes('?') ? '&' : '?';
+      const url = `${fetchUrl}${separator}offset=${currentOffset}&page_size=${pageSize}`;
       const response = await fetch(url);
       
       if (!response.ok) {

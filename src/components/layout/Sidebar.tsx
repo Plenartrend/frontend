@@ -21,8 +21,14 @@ export function Sidebar({ isOpen = false, onClose }: SidebarProps) {
   const [quickAccess, setQuickAccess] = useState<{topics: any[], politicians: any[]} | null>(null);
   const [isQuickAccessExpanded, setIsQuickAccessExpanded] = useState(true);
   const [isExplorerExpanded, setIsExplorerExpanded] = useState(true);
+  const [mounted, setMounted] = useState(false);
 
   const isExplorerActive = pathname.startsWith('/explorer');
+
+  // Prevent hydration mismatch
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // Close sidebar on navigation (mobile)
   useEffect(() => {
@@ -41,11 +47,15 @@ export function Sidebar({ isOpen = false, onClose }: SidebarProps) {
       Promise.all([
         fetch('/api/v1/topics').then(r => r.json()),
         fetch('/api/v1/politicians').then(r => r.json())
-      ]).then(([allTopics, allPols]) => {
+      ]).then(([topicsData, allPols]) => {
+        const allTopics = topicsData.data || topicsData; // Handle both {data: []} and [] response formats
         setQuickAccess({
-          topics: allTopics.filter((t: any) => watchedTopics.includes(t.id)).slice(0, 3),
-          politicians: allPols.filter((p: any) => watchedPoliticians.includes(p.id)).slice(0, 3)
+          topics: Array.isArray(allTopics) ? allTopics.filter((t: any) => watchedTopics.includes(t.id)).slice(0, 3) : [],
+          politicians: Array.isArray(allPols) ? allPols.filter((p: any) => watchedPoliticians.includes(p.id)).slice(0, 3) : []
         });
+      }).catch(err => {
+        console.error('Failed to fetch quick access data:', err);
+        setQuickAccess({ topics: [], politicians: [] });
       });
     }
   }, [user, watchedTopics, watchedPoliticians]);
@@ -129,7 +139,7 @@ export function Sidebar({ isOpen = false, onClose }: SidebarProps) {
             )}
           </div>
 
-          {user && (
+          {mounted && user && (
             <>
               <Link
                 href="/watchlist"

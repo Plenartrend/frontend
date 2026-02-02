@@ -23,10 +23,16 @@ export function Header({ onMenuClick }: HeaderProps) {
   const [notifications, setNotifications] = useState<any[]>([]);
   const [showResults, setShowResults] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+  const [mounted, setMounted] = useState(false);
   
   const searchRef = useRef<HTMLDivElement>(null);
   const profileRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
+
+  // Prevent hydration mismatch
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     const checkMobile = () => setIsMobile(window.innerWidth < 640);
@@ -185,7 +191,7 @@ export function Header({ onMenuClick }: HeaderProps) {
       </div>
       
       <div className="flex items-center gap-x-4 relative flex-none ml-auto">
-        {user && (
+        {mounted && user && (
           <div className="relative">
             <button 
               type="button" 

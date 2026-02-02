@@ -7,47 +7,42 @@ import { useParams } from "next/navigation";
 import { WatchButton } from "@/components/ui/WatchButton";
 import { useEffect, useState } from "react";
 import { BackButton } from "@/components/ui/BackButton";
+import { POLITICIANS, SPEECHES } from "@/lib/mockData";
 
 export default function PoliticianDetail() {
   const params = useParams();
   const id = params?.id as string;
   const [politicianData, setPoliticianData] = useState<any>(null);
   const [similarPoliticians, setSimilarPoliticians] = useState<any[]>([]);
-  const [allTopics, setAllTopics] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(false);
 
   useEffect(() => {
     if (!id) return;
 
-    const fetchData = async () => {
-      try {
-        const [polRes, allPolsRes, topicsRes] = await Promise.all([
-          fetch(`/api/v1/politicians/${id}`),
-          fetch('/api/v1/politicians'),
-          fetch('/api/v1/topics')
-        ]);
+    // Always show the first mock politician regardless of ID
+    setTimeout(() => {
+      const politician = POLITICIANS[0]; // Always use first mock politician
+      
+      // Generate deterministic activity data
+      const activityData = Array.from({ length: 12 }, (_, i) => ({
+        date: `2025-${String(i + 1).padStart(2, '0')}`,
+        value: 60 + (i * 7) % 30
+      }));
 
-        if (!polRes.ok) throw new Error("Politician not found");
+      // Get some mock speeches
+      const politicianSpeeches = SPEECHES.slice(0, 3);
 
-        const polData = await polRes.json();
-        const allPols = await allPolsRes.json();
-        const topics = await topicsRes.json();
+      setPoliticianData({
+        ...politician,
+        activityData,
+        speeches: politicianSpeeches
+      });
 
-        setPoliticianData(polData);
-        setAllTopics(topics);
-
-        if (polData.similar && polData.similar.length > 0) {
-          setSimilarPoliticians(allPols.filter((p: any) => polData.similar.includes(p.id)));
-        }
-      } catch (err) {
-        setError(true);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchData();
+      // Get similar politicians
+      setSimilarPoliticians(POLITICIANS.slice(1, 4));
+      
+      setLoading(false);
+    }, 300);
   }, [id]);
 
   if (loading) {
@@ -58,10 +53,11 @@ export default function PoliticianDetail() {
     );
   }
 
-  if (error || !politicianData) {
+  if (!politicianData) {
     return (
       <div className="text-center py-20">
         <h2 className="text-xl font-bold text-slate-900">Abgeordneter nicht gefunden</h2>
+        <p className="text-slate-500 mt-2">Dieser Abgeordnete existiert nicht in den Mock-Daten.</p>
         <div className="mt-6">
           <BackButton />
         </div>
@@ -106,10 +102,6 @@ export default function PoliticianDetail() {
                      {politician.role} ({politician.region})
                    </span>
                  </div>
-               </div>
-               <div className="flex flex-wrap gap-4 mt-4 text-sm text-slate-500">
-                  <span>Alter: <strong className="text-slate-700">{politician.age}</strong></span>
-                  <span>Geschlecht: <strong className="text-slate-700">{politician.gender}</strong></span>
                </div>
             </div>
           </div>
@@ -168,14 +160,6 @@ export default function PoliticianDetail() {
                       </div>
                     </div>
                   ))}
-                   {allTopics.slice(0, 2).map((t: any) => (
-                      <div key={t.id} className="border border-slate-200 rounded-lg p-4 opacity-75">
-                         <h3 className="font-medium text-slate-700">{t.title}</h3>
-                         <div className="mt-3 h-2 bg-slate-100 rounded-full overflow-hidden">
-                            <div className="h-full bg-slate-400" style={{ width: '30%' }}></div>
-                         </div>
-                      </div>
-                   ))}
                </div>
             </div>
 

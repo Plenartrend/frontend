@@ -30,14 +30,11 @@ export interface Politician {
   name: string;
   party: string;
   role: string;
-  region: string;
-  age: number;
-  gender: string;
   volatility: string;
-  contributionFactor: number;
-  image: string;
-  topTopics: TopTopic[];
-  similar: string[];
+  contributionFactor: 'low' | 'medium' | 'high';
+  topTopics?: TopTopic[];
+  similar?: string[];
+  numSpeeches?: number;
 }
 
 export interface Topic {
