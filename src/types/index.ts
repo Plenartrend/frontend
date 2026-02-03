@@ -98,6 +98,7 @@ export interface Speech {
   speaker: PoliticianRef;
   topic?: TopicRef;
   session: string;
+  sentiment?: "stark positiv" | "positiv" | "neutral" | "negativ" | "stark negativ" | "unbekannt";
 }
 
 export interface PaginatedSpeeches {

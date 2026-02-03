@@ -155,6 +155,23 @@ export default function ExplorerSpeechesPage() {
               speech.topic?.category
             );
 
+            // Determine sentiment display
+            let sentimentLabel = null;
+            let sentimentColor = "";
+            
+            if (speech.sentiment && speech.sentiment !== "unbekannt") {
+              if (speech.sentiment.includes("positiv")) {
+                sentimentLabel = "Positiv";
+                sentimentColor = "bg-green-100 text-green-700";
+              } else if (speech.sentiment.includes("negativ")) {
+                sentimentLabel = "Negativ";
+                sentimentColor = "bg-red-100 text-red-700";
+              } else if (speech.sentiment === "neutral") {
+                sentimentLabel = "Neutral";
+                sentimentColor = "bg-gray-100 text-gray-700";
+              }
+            }
+
             return (
               <Link key={`${speech.id}-${index}`} href={`/speeches/${speech.id}`} className="block group">
                 <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-6 hover:border-blue-300 hover:shadow-md transition-all">
@@ -195,6 +212,18 @@ export default function ExplorerSpeechesPage() {
                           <FileText className="h-4 w-4 text-slate-400" />
                           <span>{speech.topic!.category}</span>
                        </div>
+                     )}
+                     {sentimentLabel && (
+                        <div className="flex items-center gap-2">
+                           <div className={`w-2 h-2 rounded-full ${
+                             sentimentLabel === 'Positiv' ? 'bg-green-500' : 
+                             sentimentLabel === 'Negativ' ? 'bg-red-500' : 'bg-gray-400'
+                           }`} />
+                           <span className="text-xs font-medium">
+                             {sentimentLabel === 'Positiv' ? 'Positive Meinung' : 
+                              sentimentLabel === 'Negativ' ? 'Negative Meinung' : 'Neutrale Meinung'}
+                           </span>
+                        </div>
                      )}
                   </div>
                 </div>
