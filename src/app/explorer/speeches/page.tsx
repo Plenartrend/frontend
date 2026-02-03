@@ -202,7 +202,7 @@ export default function ExplorerSpeechesPage() {
                     </div>
                   </div>
                   
-                  <div className="flex items-center gap-6 text-sm text-slate-600 border-t border-slate-100 pt-4">
+                  <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-slate-600 border-t border-slate-100 pt-4">
                      <div className="flex items-center gap-2">
                         <User className="h-4 w-4 text-slate-400" />
                         <span className="font-medium text-slate-700">{speakerName}</span> 
@@ -219,7 +219,7 @@ export default function ExplorerSpeechesPage() {
                              sentimentLabel === 'Positiv' ? 'bg-green-500' : 
                              sentimentLabel === 'Negativ' ? 'bg-red-500' : 'bg-gray-400'
                            }`} />
-                           <span className="text-xs font-medium">
+                           <span className="text-xs font-medium whitespace-nowrap">
                              {sentimentLabel === 'Positiv' ? 'Positive Meinung' : 
                               sentimentLabel === 'Negativ' ? 'Negative Meinung' : 'Neutrale Meinung'}
                            </span>

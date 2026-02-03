@@ -150,7 +150,7 @@ export default function SpeechDetail() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
          {/* Main Content Column (Left) */}
          <div className="lg:col-span-2 space-y-6">
-            <div className="bg-white rounded-xl shadow-sm border border-slate-200 py-12 px-20">
+            <div className="bg-white rounded-xl shadow-sm border border-slate-200 py-8 px-6 sm:py-12 sm:px-12 md:px-20">
                <h2 className="text-lg font-bold text-slate-900 mb-6 border-b border-slate-100 pb-4">Transkript</h2>
                <div className="prose prose-slate max-w-none text-slate-700 leading-relaxed">
                   {renderContent(speech.content)}
