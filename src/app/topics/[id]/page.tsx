@@ -243,7 +243,7 @@ export default function TopicDetail() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="rounded-lg bg-white p-6 shadow border border-slate-100">
               <h3 className="text-lg font-semibold text-slate-900 mb-2">Relevanz über Zeit</h3>
-              <p className="text-sm text-slate-500 mb-4">Wann wurde über {topicData.title} diskutiert</p>
+              <p className="text-sm text-slate-500 mb-4">Wann war {topicData.title} wie wichtig im Vergleich zu anderen Themen?</p>
               {chartsLoading ? (
                 <div className="flex items-center justify-center h-64">
                   <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
