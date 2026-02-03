@@ -4,6 +4,13 @@ import { Search, X, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { useState, useMemo, useEffect, useRef } from "react";
 
+// Format volatility: multiply by 100 and display as score/100
+const formatVolatility = (volatility: string | null | undefined) => {
+  if (!volatility) return 'N/A';
+  const val = parseFloat(volatility) * 100;
+  return `${Math.round(val)}/100`;
+};
+
 export default function ExplorerPartiesPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedSize, setSelectedSize] = useState<string>("");
@@ -218,7 +225,7 @@ export default function ExplorerPartiesPage() {
                 <div className="w-px h-8 bg-slate-200"></div>
                 <div className="flex flex-col">
                   <span className="text-slate-500">Volatilität</span>
-                  <span className="font-bold text-slate-900 text-sm">{party.volatility || 'N/A'}</span>
+                  <span className="font-bold text-slate-900 text-sm">{formatVolatility(party.volatility)}</span>
                 </div>
                 <div className="w-px h-8 bg-slate-200"></div>
                 <div className="flex flex-col">

@@ -7,6 +7,13 @@ import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { BackButton } from "@/components/ui/BackButton";
 
+// Format volatility: multiply by 100 and display as score/100
+const formatVolatility = (volatility: string | null | undefined) => {
+  if (!volatility) return 'N/A';
+  const val = parseFloat(volatility) * 100;
+  return `${Math.round(val)}/100`;
+};
+
 export default function PartyDetail() {
   const params = useParams();
   const id = params?.id as string;
@@ -107,7 +114,7 @@ export default function PartyDetail() {
         <span className="font-medium text-slate-900">{party.name}</span>
       </nav>
 
-      {/* Election Period and Time Range Selectors */}
+      {/* Election Period Selector */}
       <div className="flex gap-4 flex-wrap">
         <div>
           <label htmlFor="period-select" className="block text-xs font-medium text-slate-700 mb-1">Wahlperiode</label>
@@ -127,21 +134,6 @@ export default function PartyDetail() {
                 </option>
               ))
             )}
-          </select>
-        </div>
-        <div>
-          <label htmlFor="timerange-select" className="block text-xs font-medium text-slate-700 mb-1">Zeitraum</label>
-          <select
-            id="timerange-select"
-            value={timeRange}
-            onChange={(e) => setTimeRange(e.target.value)}
-            className="rounded-md border-0 py-2 px-3 text-slate-900 ring-1 ring-inset ring-slate-300 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:text-sm bg-white shadow-sm"
-          >
-            {timeRangeOptions.map(option => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
           </select>
         </div>
       </div>
@@ -173,7 +165,7 @@ export default function PartyDetail() {
           </div>
           <div>
             <p className="text-sm text-slate-500 font-medium">Volatilität</p>
-            <p className="text-2xl font-bold text-slate-900">{party.volatility}</p>
+            <p className="text-2xl font-bold text-slate-900">{formatVolatility(party.volatility)}</p>
           </div>
         </div>
         <div className="bg-white p-6 rounded-lg shadow border border-slate-100 flex items-center gap-4">
@@ -214,7 +206,11 @@ export default function PartyDetail() {
             <h2 className="text-lg font-bold text-slate-900 mb-6">Schwerpunktthemen</h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {party.topTopics?.map((item: any, idx: number) => (
-                <div key={idx} className="border border-slate-200 rounded-lg p-4 hover:border-blue-300 transition-colors cursor-pointer">
+                <Link 
+                  key={item.id || idx} 
+                  href={`/topics/${item.id}`}
+                  className="border border-slate-200 rounded-lg p-4 hover:border-blue-300 transition-colors block"
+                >
                   <div className="flex justify-between items-start">
                     <h3 className="font-semibold text-slate-900">{item.title}</h3>
                     <span className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full">Top {idx + 1}</span>
@@ -234,13 +230,24 @@ export default function PartyDetail() {
                       {item.stance}
                     </span>
                   </div>
-                </div>
+                </Link>
               ))}
             </div>
           </div>
 
           <div className="bg-white p-6 rounded-lg shadow border border-slate-100">
-            <h2 className="text-lg font-bold text-slate-900 mb-4">Aktivitätstrend über Zeit</h2>
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-lg font-bold text-slate-900">Aktivitätstrend über Zeit</h2>
+              <select
+                value={timeRange}
+                onChange={(e) => setTimeRange(e.target.value)}
+                className="text-sm border border-slate-300 rounded-md px-3 py-2 bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                {timeRangeOptions.map(option => (
+                  <option key={option.value} value={option.value}>{option.label}</option>
+                ))}
+              </select>
+            </div>
             <TrendChart data={activityData} yAxisLabel="Aktivitätsindex" interactive={false} />
             <p className="text-xs text-slate-400 mt-2 text-center">Kombinierte Metrik aus Reden, Anfragen und Abstimmungen.</p>
           </div>
@@ -271,7 +278,7 @@ export default function PartyDetail() {
             {members && members.length > 6 && (
               <div className="mt-4 text-center">
                 <Link 
-                  href={`/explorer/politicians?party=${party.abbreviation}`}
+                  href={`/explorer/politicians?party=${party.id}`}
                   className="text-sm text-blue-600 hover:text-blue-700 font-medium"
                 >
                   Alle {members.length} Mitglieder anzeigen →
@@ -323,23 +330,28 @@ export default function PartyDetail() {
             {recentSpeeches && recentSpeeches.length > 0 ? (
               <ul className="divide-y divide-slate-100">
                 {recentSpeeches.map((speech: any) => (
-                  <li key={speech.id} className="py-4 hover:bg-slate-50 -mx-4 px-4 transition-colors">
-                    <div className="flex justify-between items-start">
-                      <div className="flex-1">
-                        <h3 className="text-sm font-semibold text-slate-900 hover:text-blue-600 transition-colors line-clamp-2">
-                          {speech.title}
-                        </h3>
-                        <div className="flex items-center gap-2 mt-1">
-                          <p className="text-xs text-slate-500">{speech.type}</p>
-                          <span className="text-xs text-slate-400">•</span>
-                          <p className="text-xs text-slate-400">{speech.speaker}</p>
+                  <li key={speech.id}>
+                    <Link 
+                      href={`/speeches/${speech.id}`}
+                      className="block py-4 hover:bg-slate-50 -mx-4 px-4 transition-colors"
+                    >
+                      <div className="flex justify-between items-start">
+                        <div className="flex-1">
+                          <h3 className="text-sm font-semibold text-slate-900 hover:text-blue-600 transition-colors line-clamp-2">
+                            {speech.title}
+                          </h3>
+                          <div className="flex items-center gap-2 mt-1">
+                            <p className="text-xs text-slate-500">{speech.type}</p>
+                            <span className="text-xs text-slate-400">•</span>
+                            <p className="text-xs text-slate-400">{speech.speaker}</p>
+                          </div>
                         </div>
+                        <span className="text-xs text-slate-400 flex items-center gap-1 whitespace-nowrap ml-2">
+                          <Calendar className="h-3 w-3" />
+                          {new Date(speech.date).toLocaleDateString('de-DE')}
+                        </span>
                       </div>
-                      <span className="text-xs text-slate-400 flex items-center gap-1 whitespace-nowrap ml-2">
-                        <Calendar className="h-3 w-3" />
-                        {new Date(speech.date).toLocaleDateString('de-DE')}
-                      </span>
-                    </div>
+                    </Link>
                   </li>
                 ))}
               </ul>

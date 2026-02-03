@@ -2,6 +2,7 @@
 
 import { Search, User, X, TrendingUp, TrendingDown, Minus, Loader2, Trophy, TrendingDown as TrendingDownIcon } from "lucide-react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { useState, useMemo, useEffect, useRef, useCallback } from "react";
 
 type TabType = 'overview' | 'ranking';
@@ -14,6 +15,8 @@ const formatVolatility = (volatility: string | null | undefined) => {
 };
 
 export default function ExplorerPoliticiansPage() {
+  const searchParams = useSearchParams();
+  const partyParam = searchParams.get('party');
   const [activeTab, setActiveTab] = useState<TabType>('overview');
   const [searchQuery, setSearchQuery] = useState("");
   const [electionPeriods, setElectionPeriods] = useState<any[]>([]);
@@ -21,6 +24,8 @@ export default function ExplorerPoliticiansPage() {
   const [loadingPeriods, setLoadingPeriods] = useState(true);
   const [parliamentaryGroups, setParliamentaryGroups] = useState<any[]>([]);
   const [selectedGroup, setSelectedGroup] = useState<number | null>(null);
+  const initialGroupSetRef = useRef(false);
+  const isFirstPeriodLoad = useRef(true);
   const [selectedContribution, setSelectedContribution] = useState<string>("");
   const [selectedLetter, setSelectedLetter] = useState<string>("");
   const [politicians, setPoliticians] = useState<any[]>([]);
@@ -66,14 +71,26 @@ export default function ExplorerPoliticiansPage() {
   // Fetch parliamentary groups when election period changes
   useEffect(() => {
     if (selectedPeriod) {
-      // Reset group filter when election period changes
-      setSelectedGroup(null);
+      // Reset group filter when election period changes (but not on initial load)
+      if (!isFirstPeriodLoad.current) {
+        setSelectedGroup(null);
+      }
+      isFirstPeriodLoad.current = false;
       
       fetch(`/api/v1/parliamentary-groups?election_period=${selectedPeriod}`)
         .then(res => res.json())
         .then(data => {
           if (Array.isArray(data)) {
             setParliamentaryGroups(data);
+            // Set initial group from URL parameter if present and not yet set
+            if (partyParam && !initialGroupSetRef.current) {
+              const groupId = Number(partyParam);
+              const matchingGroup = data.find((g: any) => g.id === groupId);
+              if (matchingGroup) {
+                setSelectedGroup(groupId);
+              }
+              initialGroupSetRef.current = true;
+            }
           } else {
             console.error('Parliamentary groups response is not an array:', data);
             setParliamentaryGroups([]);
@@ -84,7 +101,7 @@ export default function ExplorerPoliticiansPage() {
           setParliamentaryGroups([]);
         });
     }
-  }, [selectedPeriod]);
+  }, [selectedPeriod, partyParam]);
 
   // Fetch all politicians when election period changes
   useEffect(() => {
