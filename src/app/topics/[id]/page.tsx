@@ -18,7 +18,6 @@ export default function TopicDetail() {
   const [positionData, setPositionData] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
-  const [expandedSpeeches, setExpandedSpeeches] = useState<Set<string>>(new Set());
   const [timeRange, setTimeRange] = useState<string>('last_6_months');
   const hasUpdatedVisit = useRef(false);
   const [copied, setCopied] = useState(false);
@@ -35,17 +34,7 @@ export default function TopicDetail() {
     { value: 'max', label: 'Alle Daten' },
   ];
 
-  const toggleSpeech = (speechId: string) => {
-    setExpandedSpeeches(prev => {
-      const newSet = new Set(prev);
-      if (newSet.has(speechId)) {
-        newSet.delete(speechId);
-      } else {
-        newSet.add(speechId);
-      }
-      return newSet;
-    });
-  };
+
 
   useEffect(() => {
     if (id && topicData && !hasUpdatedVisit.current && isTopicWatched(id)) {
@@ -290,18 +279,12 @@ export default function TopicDetail() {
              {speeches.length > 0 ? (
               <ul className="space-y-4">
                 {speeches.map((speech: any) => {
-                  // Truncate to first 400 characters
                   const fullText = speech.text || '';
-                  const isExpanded = expandedSpeeches.has(speech.id);
-                  const truncatedText = fullText.length > 400 
-                    ? fullText.substring(0, 400).trim() + '...' 
-                    : fullText;
-                  const isTruncated = fullText.length > 400;
                   
                   return (
                     <li key={speech.id} className="bg-slate-50 p-4 rounded-lg relative hover:bg-slate-100 transition-colors">
-                      <p className="text-sm text-slate-700 italic">
-                        &#34;{isExpanded ? fullText : truncatedText}&#34;
+                      <p className="text-sm text-slate-700 italic line-clamp-3">
+                        &#34;{fullText}&#34;
                       </p>
                       <div className="mt-2 flex items-center justify-between text-xs">
                          <span className="font-semibold text-slate-900">{speech.speaker} ({speech.party})</span>
@@ -309,14 +292,12 @@ export default function TopicDetail() {
                             <span>{new Date(speech.date).toLocaleDateString('de-DE')}</span>
                          </div>
                       </div>
-                      {isTruncated && (
-                        <button
-                          onClick={() => toggleSpeech(speech.id)}
-                          className="mt-2 text-xs text-blue-600 hover:text-blue-800 hover:underline"
-                        >
-                          {isExpanded ? 'Weniger anzeigen' : 'Vollständige Rede anzeigen'}
-                        </button>
-                      )}
+                      <Link
+                        href={`/speeches/${speech.id}`}
+                        className="mt-2 inline-block text-xs text-blue-600 hover:text-blue-800 hover:underline"
+                      >
+                        Vollständige Rede anzeigen
+                      </Link>
                     </li>
                   );
                 })}

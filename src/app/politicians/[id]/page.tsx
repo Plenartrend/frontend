@@ -23,7 +23,6 @@ export default function PoliticianDetail() {
   const [loading, setLoading] = useState(true);
   const [loadingSimilar, setLoadingSimilar] = useState(true);
   const [loadingActivity, setLoadingActivity] = useState(true);
-  const [expandedSpeeches, setExpandedSpeeches] = useState<Set<string>>(new Set());
   const [electionPeriods, setElectionPeriods] = useState<any[]>([]);
   const [selectedPeriod, setSelectedPeriod] = useState<number | null>(null);
   const [loadingPeriods, setLoadingPeriods] = useState(true);
@@ -53,17 +52,7 @@ export default function PoliticianDetail() {
     { value: 'max', label: 'Alle Daten' },
   ];
 
-  const toggleSpeech = (speechId: string) => {
-    setExpandedSpeeches(prev => {
-      const newSet = new Set(prev);
-      if (newSet.has(speechId)) {
-        newSet.delete(speechId);
-      } else {
-        newSet.add(speechId);
-      }
-      return newSet;
-    });
-  };
+
 
   // Fetch election periods
   useEffect(() => {
@@ -442,16 +431,11 @@ export default function PoliticianDetail() {
                   <ul className="space-y-4">
                     {politicianSpeeches.map((speech: any) => {
                       const fullText = speech.text || '';
-                      const isExpanded = expandedSpeeches.has(speech.id);
-                      const truncatedText = fullText.length > 400
-                        ? fullText.substring(0, 400).trim() + '...'
-                        : fullText;
-                      const isTruncated = fullText.length > 400;
-
+                      
                       return (
                         <li key={speech.id} className="bg-slate-50 p-4 rounded-lg relative hover:bg-slate-100 transition-colors">
-                          <p className="text-sm text-slate-700">
-                            "{isExpanded ? fullText : truncatedText}"
+                          <p className="text-sm text-slate-700 line-clamp-3">
+                            "{fullText}"
                           </p>
                           <div className="mt-2 flex items-center justify-between text-xs">
                             <span className="font-semibold text-slate-900">{speech.speaker || politician.name}</span>
@@ -459,14 +443,12 @@ export default function PoliticianDetail() {
                               <span>{new Date(speech.date).toLocaleDateString('de-DE')}</span>
                             </div>
                           </div>
-                          {isTruncated && (
-                            <button
-                              onClick={() => toggleSpeech(speech.id)}
-                              className="mt-2 text-xs text-blue-600 hover:text-blue-800 hover:underline"
-                            >
-                              {isExpanded ? 'Weniger anzeigen' : 'Vollständigen Ausschnitt anzeigen'}
-                            </button>
-                          )}
+                          <Link
+                            href={`/speeches/${speech.id}`}
+                            className="mt-2 inline-block text-xs text-blue-600 hover:text-blue-800 hover:underline"
+                          >
+                            Vollständigen Ausschnitt anzeigen
+                          </Link>
                         </li>
                       );
                     })}
