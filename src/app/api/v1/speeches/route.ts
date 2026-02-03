@@ -7,10 +7,16 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const offset = parseInt(searchParams.get('offset') || '0');
     const pageSize = parseInt(searchParams.get('page_size') || '20');
+    const topicId = searchParams.get('topic_id');
+
+    let url = `${API_BASE_URL}/speeches?offset=${offset}&page_size=${pageSize}`;
+    if (topicId) {
+        url += `&topic_id=${topicId}`;
+    }
 
     try {
         const res = await fetch(
-            `${API_BASE_URL}/speeches?offset=${offset}&page_size=${pageSize}`,
+            url,
             { next: { revalidate: 60 } }
         );
         if (!res.ok) {

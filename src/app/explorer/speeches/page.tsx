@@ -9,28 +9,31 @@ import { formatPublisher, formatSession, formatSpeechTitle } from "@/lib/utils";
 
 export default function ExplorerSpeechesPage() {
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState("");
-  const [categories, setCategories] = useState<string[]>([]);
+  const [selectedTopicId, setSelectedTopicId] = useState("");
+  const [topics, setTopics] = useState<Topic[]>([]);
 
   useEffect(() => {
     fetch('/api/v1/topics?page_size=1000')
       .then(res => res.json())
       .then((data: any) => {
-        let topics: Topic[] = [];
+        let loadedTopics: Topic[] = [];
         if (Array.isArray(data)) {
-          topics = data;
+          loadedTopics = data;
         } else if (data.data && Array.isArray(data.data)) {
-          topics = data.data;
+          loadedTopics = data.data;
         }
         
-        const uniqueCategories = Array.from(new Set(topics.map((t: any) => t.category || t.title))).filter(Boolean).sort();
-        setCategories(uniqueCategories);
+        // Sort topics alphabetically by title
+        loadedTopics.sort((a, b) => a.title.localeCompare(b.title));
+        setTopics(loadedTopics);
       })
-      .catch(err => console.error('Failed to fetch topics for categories', err));
+      .catch(err => console.error('Failed to fetch topics', err));
   }, []);
 
   const { data: speeches, loading, loadingMore, hasMore, loadMoreRef } = useInfiniteScroll<Speech>({
-    fetchUrl: "/api/v1/speeches",
+    fetchUrl: selectedTopicId 
+      ? `/api/v1/speeches?topic_id=${selectedTopicId}` 
+      : "/api/v1/speeches",
     pageSize: 20,
   });
 
@@ -49,14 +52,12 @@ export default function ExplorerSpeechesPage() {
       speakerName.includes(query)
     );
 
-    const matchesCategory = !selectedCategory || (s.topic?.category === selectedCategory);
-
-    return matchesSearch && matchesCategory;
+    return matchesSearch;
   });
 
   const clearFilters = () => {
     setSearchQuery("");
-    setSelectedCategory("");
+    setSelectedTopicId("");
   };
 
   if (loading) {
@@ -83,12 +84,12 @@ export default function ExplorerSpeechesPage() {
             </div>
             <select
               className="block w-full rounded-md border-0 py-1.5 pl-10 text-slate-900 ring-1 ring-inset ring-slate-300 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:text-sm sm:leading-6 appearance-none bg-none"
-              value={selectedCategory}
-              onChange={(e) => setSelectedCategory(e.target.value)}
+              value={selectedTopicId}
+              onChange={(e) => setSelectedTopicId(e.target.value)}
             >
               <option value="">Alle Themen</option>
-              {categories.map(c => (
-                <option key={c} value={c}>{c}</option>
+              {topics.map(t => (
+                <option key={t.id} value={t.id}>{t.title}</option>
               ))}
             </select>
            </div>
@@ -110,7 +111,7 @@ export default function ExplorerSpeechesPage() {
              {filteredSpeeches.length} Ergebnisse
           </div>
 
-          {(searchQuery || selectedCategory) && (
+          {(searchQuery || selectedTopicId) && (
              <button 
                 onClick={clearFilters}
                 className="inline-flex items-center gap-1 px-3 py-1.5 text-sm text-slate-500 hover:text-red-600 hover:bg-red-50 rounded-md transition-colors"
