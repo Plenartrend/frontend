@@ -4,24 +4,28 @@ import { Search, TrendingUp, TrendingDown, Minus, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { useState, useMemo } from "react";
 import { useInfiniteScroll } from "@/hooks/useInfiniteScroll";
-import { useDebounce } from "@/hooks/useDebounce";
 
 export default function ExplorerTopicsPage() {
   const [searchQuery, setSearchQuery] = useState("");
-  const debouncedSearchQuery = useDebounce(searchQuery, 300);
   
   const { data: topics, loading, loadingMore, hasMore, loadMoreRef, totalItems } = useInfiniteScroll<any>({
-    fetchUrl: `/api/v1/topics${debouncedSearchQuery ? `?search=${encodeURIComponent(debouncedSearchQuery)}` : ''}`,
+    fetchUrl: "/api/v1/topics",
     pageSize: 20,
   });
 
+  const filteredTopics = useMemo(() => {
+    if (!searchQuery.trim()) return topics;
+    const q = searchQuery.toLowerCase();
+    return topics.filter((t) => (t.title ?? "").toLowerCase().includes(q));
+  }, [searchQuery, topics]);
+
   const sortedTopics = useMemo(() => {
-    return [...topics].sort((a, b) => {
+    return [...filteredTopics].sort((a, b) => {
       const ra = a.relevance ?? 0;
       const rb = b.relevance ?? 0;
       return rb - ra;
     });
-  }, [topics]);
+  }, [filteredTopics]);
 
   const getTrendIcon = (trend: string) => {
     switch (trend) {
@@ -54,6 +58,14 @@ export default function ExplorerTopicsPage() {
     return score > 0 ? `+${score}` : `${score}`;
   };
 
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-full">
+        <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col gap-4">
@@ -80,94 +92,86 @@ export default function ExplorerTopicsPage() {
         </div>
       </div>
 
-      {loading ? (
-        <div className="flex items-center justify-center py-24">
-          <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
-        </div>
-      ) : (
-        <>
-          {/* Results count */}
-          <div className="text-sm text-slate-500">
-            {searchQuery ? (
-              <>{sortedTopics.length} von {totalItems} {totalItems === 1 ? 'Thema' : 'Themen'} gefunden</>
-            ) : (
-              <>{totalItems} {totalItems === 1 ? 'Thema' : 'Themen'} gefunden</>
-            )}
-          </div>
+      {/* Results count */}
+      <div className="text-sm text-slate-500">
+        {searchQuery ? (
+          <>{sortedTopics.length} von {totalItems} {totalItems === 1 ? 'Thema' : 'Themen'} gefunden</>
+        ) : (
+          <>{totalItems} {totalItems === 1 ? 'Thema' : 'Themen'} gefunden</>
+        )}
+      </div>
 
-          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {sortedTopics.map((topic: any, index: number) => (
-              <Link key={`${topic.id}-${index}`} href={`/topics/${topic.id}`} className="group">
-                <div className="flex flex-col h-full overflow-hidden rounded-lg bg-white shadow transition-all duration-200 hover:shadow-lg hover:-translate-y-1 border border-slate-100 ring-1 ring-slate-200 hover:ring-blue-500/50">
-                  <div className="p-5 flex-1">
-                    <h3 className="text-lg font-semibold leading-6 text-slate-900 group-hover:text-blue-600 transition-colors">
-                      {topic.title}
-                    </h3>
-                    <p className="mt-2 text-sm text-slate-500 line-clamp-2">
-                      Analyse des aktuellen legislativen Diskurses zu {topic.title}.
-                    </p>
-                    <div className="mt-4 flex items-center gap-4 text-xs text-slate-500">
+      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        {sortedTopics.map((topic: any, index: number) => (
+          <Link key={`${topic.id}-${index}`} href={`/topics/${topic.id}`} className="group">
+            <div className="flex flex-col h-full overflow-hidden rounded-lg bg-white shadow transition-all duration-200 hover:shadow-lg hover:-translate-y-1 border border-slate-100 ring-1 ring-slate-200 hover:ring-blue-500/50">
+              <div className="p-5 flex-1">
+                <h3 className="text-lg font-semibold leading-6 text-slate-900 group-hover:text-blue-600 transition-colors">
+                  {topic.title}
+                </h3>
+                <p className="mt-2 text-sm text-slate-500 line-clamp-2">
+                  Analyse des aktuellen legislativen Diskurses zu {topic.title}.
+                </p>
+                <div className="mt-4 flex items-center gap-4 text-xs text-slate-500">
+                </div>
+              </div>
+              <div className="bg-slate-50 px-5 py-2.5 border-t border-slate-100 group-hover:bg-blue-50/30 transition-colors">
+                <div className="grid grid-cols-2 gap-4">
+                  {/* Relevanz */}
+                  <div>
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-xs text-slate-500">Relevanz</span>
+                      <span className="text-xs font-semibold text-slate-900">
+                        {relevanceDisplay(topic.relevance)}
+                      </span>
+                    </div>
+                    <div className="h-1.5 w-full rounded-full bg-slate-200">
+                      <div
+                        className="h-1.5 rounded-full bg-blue-500"
+                        style={{ width: `${relevancePercent(topic.relevance)}%` }}
+                      />
                     </div>
                   </div>
-                  <div className="bg-slate-50 px-5 py-2.5 border-t border-slate-100 group-hover:bg-blue-50/30 transition-colors">
-                    <div className="grid grid-cols-2 gap-4">
-                      {/* Relevanz */}
-                      <div>
-                        <div className="flex items-center justify-between mb-1">
-                          <span className="text-xs text-slate-500">Relevanz</span>
-                          <span className="text-xs font-semibold text-slate-900">
-                            {relevanceDisplay(topic.relevance)}
-                          </span>
-                        </div>
-                        <div className="h-1.5 w-full rounded-full bg-slate-200">
-                          <div
-                            className="h-1.5 rounded-full bg-blue-500"
-                            style={{ width: `${relevancePercent(topic.relevance)}%` }}
-                          />
-                        </div>
-                      </div>
-                      
-                      {/* Stimmung */}
-                      <div>
-                        <div className="flex items-center justify-between mb-1">
-                          <span className="text-xs text-slate-500">Stimmung</span>
-                          <span className="text-xs font-semibold text-slate-900">
-                            {sentimentDisplay(topic.sentiment)}
-                          </span>
-                        </div>
-                        <div className="h-1.5 w-full rounded-full bg-slate-200 relative overflow-hidden">
-                          {sentimentScore(topic.sentiment) !== 0 ? (
-                            <div
-                              className={`absolute left-0 top-0 bottom-0 h-full rounded-full ${
-                                sentimentScore(topic.sentiment) > 0 ? "bg-green-400" : "bg-red-400"
-                              }`}
-                              style={{
-                                width: `${Math.abs(sentimentScore(topic.sentiment))}%`,
-                              }}
-                            />
-                          ) : null}
-                        </div>
-                      </div>
+                  
+                  {/* Stimmung */}
+                  <div>
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-xs text-slate-500">Stimmung</span>
+                      <span className="text-xs font-semibold text-slate-900">
+                        {sentimentDisplay(topic.sentiment)}
+                      </span>
+                    </div>
+                    <div className="h-1.5 w-full rounded-full bg-slate-200 relative overflow-hidden">
+                      {sentimentScore(topic.sentiment) !== 0 ? (
+                        <div
+                          className={`absolute left-0 top-0 bottom-0 h-full rounded-full ${
+                            sentimentScore(topic.sentiment) > 0 ? "bg-green-400" : "bg-red-400"
+                          }`}
+                          style={{
+                            width: `${Math.abs(sentimentScore(topic.sentiment))}%`,
+                          }}
+                        />
+                      ) : null}
                     </div>
                   </div>
                 </div>
-              </Link>
-            ))}
-          </div>
-
-          {/* Infinite scroll trigger */}
-          {hasMore && (
-            <div ref={loadMoreRef} className="flex justify-center py-8">
-              {loadingMore && <Loader2 className="h-8 w-8 animate-spin text-blue-600" />}
+              </div>
             </div>
-          )}
+          </Link>
+        ))}
+      </div>
 
-          {!loading && !hasMore && sortedTopics.length > 0 && (
-            <div className="text-center py-8 text-sm text-slate-500">
-              Alle Themen geladen
-            </div>
-          )}
-        </>
+      {/* Infinite scroll trigger */}
+      {hasMore && (
+        <div ref={loadMoreRef} className="flex justify-center py-8">
+          {loadingMore && <Loader2 className="h-8 w-8 animate-spin text-blue-600" />}
+        </div>
+      )}
+
+      {!loading && !hasMore && sortedTopics.length > 0 && (
+        <div className="text-center py-8 text-sm text-slate-500">
+          Alle Themen geladen
+        </div>
       )}
     </div>
   );
