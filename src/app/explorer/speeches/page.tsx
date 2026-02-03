@@ -60,13 +60,7 @@ export default function ExplorerSpeechesPage() {
     setSelectedTopicId("");
   };
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-full">
-        <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
-      </div>
-    );
-  }
+
 
   return (
     <div className="space-y-6">
@@ -123,9 +117,14 @@ export default function ExplorerSpeechesPage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      {loading ? (
+        <div className="flex items-center justify-center py-24">
+          <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {filteredSpeeches.length === 0 ? (
-          <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-12 text-center">
+          <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-12 text-center col-span-full">
             <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-slate-50 text-slate-400 mb-4">
               <Search className="h-6 w-6" />
             </div>
@@ -204,6 +203,7 @@ export default function ExplorerSpeechesPage() {
           })
         )}
       </div>
+      )}
 
       {/* Infinite scroll trigger */}
       {hasMore && !searchQuery && (
