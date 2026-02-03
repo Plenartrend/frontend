@@ -78,7 +78,13 @@ export default function SpeechDetail() {
 
   const renderContent = (text: string) => {
     if (!text) return null;
-    const parts = text.split(/(\[HIGHLIGHT\].*?\[\/HIGHLIGHT\])/g);
+
+    const cleanedText = text
+      .split(/\n\s*\n/)
+      .map(p => p.replace(/\n/g, ' '))
+      .join('\n\n');
+
+    const parts = cleanedText.split(/(\[HIGHLIGHT\].*?\[\/HIGHLIGHT\])/g);
     return parts.map((part, index) => {
       if (part.startsWith('[HIGHLIGHT]')) {
         const content = part.replace('[HIGHLIGHT]', '').replace('[/HIGHLIGHT]', '');
