@@ -3,7 +3,7 @@
 import { Search, User, X, TrendingUp, TrendingDown, Minus, Loader2, Trophy, TrendingDown as TrendingDownIcon } from "lucide-react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { useState, useMemo, useEffect, useRef, useCallback } from "react";
+import { useState, useMemo, useEffect, useRef, useCallback, Suspense } from "react";
 
 type TabType = 'overview' | 'ranking';
 
@@ -14,7 +14,7 @@ const formatVolatility = (volatility: string | null | undefined) => {
   return `${Math.round(val)}/100`;
 };
 
-export default function ExplorerPoliticiansPage() {
+function ExplorerPoliticiansContent() {
   const searchParams = useSearchParams();
   const partyParam = searchParams.get('party');
   const [activeTab, setActiveTab] = useState<TabType>('overview');
@@ -722,5 +722,17 @@ export default function ExplorerPoliticiansPage() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function ExplorerPoliticiansPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex items-center justify-center h-full">
+        <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+      </div>
+    }>
+      <ExplorerPoliticiansContent />
+    </Suspense>
   );
 }
