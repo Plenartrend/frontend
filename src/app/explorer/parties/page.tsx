@@ -4,103 +4,11 @@ import { Search, X, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { useState, useMemo, useEffect, useRef } from "react";
 
-// Mock data for parties
-const MOCK_PARTIES = [
-  {
-    id: 'party1',
-    name: 'CDU',
-    volatility: 'Niedrig',
-    contribution: 'high',
-    topTopics: [
-      { topic: 'Wirtschaft', stance: 'Pro' },
-      { topic: 'Innere Sicherheit', stance: 'Pro' },
-      { topic: 'Energiepolitik', stance: 'Gemäßigt' }
-    ]
-  },
-  {
-    id: 'party2',
-    name: 'SPD',
-    volatility: 'Mittel',
-    contribution: 'medium',
-    topTopics: [
-      { topic: 'Soziales', stance: 'Pro' },
-      { topic: 'Arbeitnehmerrechte', stance: 'Pro' },
-      { topic: 'Mindestlohn', stance: 'Pro' }
-    ]
-  },
-  {
-    id: 'party3',
-    name: 'GRÜNE',
-    volatility: 'Hoch',
-    contribution: 'high',
-    topTopics: [
-      { topic: 'Klimaschutz', stance: 'Pro' },
-      { topic: 'Verkehrswende', stance: 'Pro' },
-      { topic: 'Erneuerbare Energien', stance: 'Pro' }
-    ]
-  },
-  {
-    id: 'party4',
-    name: 'FDP',
-    volatility: 'Niedrig',
-    contribution: 'medium',
-    topTopics: [
-      { topic: 'Steuersenkungen', stance: 'Pro' },
-      { topic: 'Digitalisierung', stance: 'Pro' },
-      { topic: 'Bürokratieabbau', stance: 'Pro' }
-    ]
-  },
-  {
-    id: 'party5',
-    name: 'AfD',
-    volatility: 'Hoch',
-    contribution: 'low',
-    topTopics: [
-      { topic: 'Migration', stance: 'Restriktiv' },
-      { topic: 'Energie', stance: 'Konservativ' },
-      { topic: 'EU-Politik', stance: 'Kritisch' }
-    ]
-  },
-  {
-    id: 'party6',
-    name: 'DIE LINKE',
-    volatility: 'Mittel',
-    contribution: 'low',
-    topTopics: [
-      { topic: 'Soziale Gerechtigkeit', stance: 'Pro' },
-      { topic: 'Friedenspolitik', stance: 'Pro' },
-      { topic: 'Vermögenssteuer', stance: 'Pro' }
-    ]
-  },
-  {
-    id: 'party7',
-    name: 'BSW',
-    volatility: 'Mittel',
-    contribution: 'medium',
-    topTopics: [
-      { topic: 'Friedenspolitik', stance: 'Pro' },
-      { topic: 'Soziale Marktwirtschaft', stance: 'Pro' },
-      { topic: 'Diplomatie', stance: 'Pro' }
-    ]
-  },
-  {
-    id: 'party8',
-    name: 'CSU',
-    volatility: 'Niedrig',
-    contribution: 'high',
-    topTopics: [
-      { topic: 'Innere Sicherheit', stance: 'Pro' },
-      { topic: 'Föderalismus', stance: 'Pro' },
-      { topic: 'Wirtschaft', stance: 'Pro' }
-    ]
-  }
-];
-
 export default function ExplorerPartiesPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedSize, setSelectedSize] = useState<string>("");
-  const [parties, setParties] = useState<any[]>(MOCK_PARTIES);
-  const [loading, setLoading] = useState(false);
+  const [parties, setParties] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
   const [displayCount, setDisplayCount] = useState(20);
   const loadMoreRef = useRef<HTMLDivElement>(null);
   const [electionPeriods, setElectionPeriods] = useState<any[]>([]);
@@ -129,6 +37,29 @@ export default function ExplorerPartiesPage() {
         setLoadingPeriods(false);
       });
   }, []);
+
+  // Fetch parties data
+  useEffect(() => {
+    if (selectedPeriod === null) return;
+
+    setLoading(true);
+    fetch(`/api/v1/parties?election_period=${selectedPeriod}`)
+      .then(res => {
+        if (!res.ok) {
+          throw new Error('Failed to fetch parties');
+        }
+        return res.json();
+      })
+      .then(data => {
+        setParties(Array.isArray(data) ? data : []);
+        setLoading(false);
+      })
+      .catch(err => {
+        console.error('Failed to fetch parties:', err);
+        setParties([]);
+        setLoading(false);
+      });
+  }, [selectedPeriod]);
 
   const filteredParties = useMemo(() => {
     return parties.filter(p => {
@@ -260,9 +191,9 @@ export default function ExplorerPartiesPage() {
                           <span 
                             key={i} 
                             className="inline-block rounded-full bg-blue-50 px-2.5 py-0.5 text-xs font-medium text-blue-700 ring-1 ring-inset ring-blue-700/10 hover:bg-blue-100 transition-colors truncate overflow-hidden"
-                            title={t.topic}
+                            title={t.title}
                           >
-                            {t.topic}
+                            {t.title}
                           </span>
                         ))}
                       </div>
@@ -275,24 +206,24 @@ export default function ExplorerPartiesPage() {
                 <div className="flex flex-col">
                   <span className="text-slate-500">Beitrag</span>
                   <span className={`font-bold text-sm ${
-                    party.contribution === 'high' ? 'text-green-600' :
-                    party.contribution === 'medium' ? 'text-yellow-600' :
+                    party.contributionFactor === 'high' ? 'text-green-600' :
+                    party.contributionFactor === 'medium' ? 'text-yellow-600' :
                     'text-red-600'
                   }`}>
-                    {party.contribution === 'high' ? 'Hoch' : 
-                     party.contribution === 'medium' ? 'Mittel' : 
+                    {party.contributionFactor === 'high' ? 'Hoch' : 
+                     party.contributionFactor === 'medium' ? 'Mittel' : 
                      'Niedrig'}
                   </span>
                 </div>
                 <div className="w-px h-8 bg-slate-200"></div>
                 <div className="flex flex-col">
                   <span className="text-slate-500">Volatilität</span>
-                  <span className="font-bold text-slate-900 text-sm">{party.volatility}</span>
+                  <span className="font-bold text-slate-900 text-sm">{party.volatility || 'N/A'}</span>
                 </div>
                 <div className="w-px h-8 bg-slate-200"></div>
                 <div className="flex flex-col">
-                  <span className="text-slate-500">Themen</span>
-                  <span className="font-bold text-slate-900 text-sm">{party.topTopics?.length || 0}</span>
+                  <span className="text-slate-500">Reden</span>
+                  <span className="font-bold text-slate-900 text-sm">{party.numSpeeches || 0}</span>
                 </div>
               </div>
             </div>

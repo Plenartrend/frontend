@@ -1,31 +1,28 @@
 "use client";
 
-import { useWatchlist, TopicStats, PoliticianStats, PartyStats } from "@/context/WatchlistContext";
+import { useWatchlist, TopicStats, PoliticianStats } from "@/context/WatchlistContext";
 import { Check, Star } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface WatchButtonProps {
   id: string;
-  type: 'topic' | 'politician' | 'party';
+  type: 'topic' | 'politician';
   label?: string;
   className?: string;
   topicStats?: TopicStats;
   politicianStats?: PoliticianStats;
-  partyStats?: PartyStats;
 }
 
-export function WatchButton({ id, type, label, className, topicStats, politicianStats, partyStats }: WatchButtonProps) {
-  const { toggleTopic, togglePolitician, toggleParty, isTopicWatched, isPoliticianWatched, isPartyWatched } = useWatchlist();
+export function WatchButton({ id, type, label, className, topicStats, politicianStats }: WatchButtonProps) {
+  const { toggleTopic, togglePolitician, isTopicWatched, isPoliticianWatched } = useWatchlist();
 
-  const isWatched = type === 'topic' ? isTopicWatched(id) : type === 'politician' ? isPoliticianWatched(id) : isPartyWatched(id);
+  const isWatched = type === 'topic' ? isTopicWatched(id) : isPoliticianWatched(id);
 
   const handleClick = () => {
     if (type === 'topic') {
       toggleTopic(id, topicStats);
-    } else if (type === 'politician') {
-      togglePolitician(id, politicianStats);
     } else {
-      toggleParty(id, partyStats);
+      togglePolitician(id, politicianStats);
     }
   };
 

@@ -4,131 +4,8 @@ import { TrendChart } from "@/components/ui/TrendChart";
 import { ChevronRight, Share2, Activity, Users, Mic, Calendar, Loader2, BarChart3, FileText } from "lucide-react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { WatchButton } from "@/components/ui/WatchButton";
 import { useEffect, useState } from "react";
 import { BackButton } from "@/components/ui/BackButton";
-
-// Mock data for parties
-const MOCK_PARTIES_DATA = [
-  {
-    id: 'party1',
-    name: 'CDU',
-    volatility: 'Niedrig',
-    contribution: 'high',
-    numSpeeches: 42,
-    topTopics: [
-      { topic: 'Wirtschaft', stance: 'Pro' },
-      { topic: 'Innere Sicherheit', stance: 'Pro' },
-      { topic: 'Energiepolitik', stance: 'Gemäßigt' },
-      { topic: 'Europa', stance: 'Pro' }
-    ],
-    members: [
-      { id: 'p1', name: 'Dr. Maria Schmidt', role: 'MdB', region: 'Baden-Württemberg' },
-      { id: 'p6', name: 'Friedrich Merz', role: 'Fraktionsvorsitzender', region: 'Nordrhein-Westfalen' },
-      { id: 'p9', name: 'Dorothee Bär', role: 'Stellv. Fraktionsvorsitzende', region: 'Bayern' }
-    ],
-    activityData: [
-      { date: '2025-01', value: 65 },
-      { date: '2025-02', value: 72 },
-      { date: '2025-03', value: 68 },
-      { date: '2025-04', value: 75 },
-      { date: '2025-05', value: 80 },
-      { date: '2025-06', value: 78 },
-      { date: '2025-07', value: 82 },
-      { date: '2025-08', value: 85 },
-      { date: '2025-09', value: 88 },
-      { date: '2025-10', value: 84 },
-      { date: '2025-11', value: 90 },
-      { date: '2025-12', value: 87 }
-    ],
-    drucksachen: [
-      { 
-        id: 'd1', 
-        title: 'Antrag zur Steuerpolitik', 
-        type: 'Antrag',
-        date: '2025-12-10T14:30:00Z',
-        number: '20/1234'
-      },
-      { 
-        id: 'd2', 
-        title: 'Gesetzentwurf zur Energiewende', 
-        type: 'Gesetzentwurf',
-        date: '2025-12-05T09:15:00Z',
-        number: '20/1235'
-      },
-      { 
-        id: 'd3', 
-        title: 'Kleine Anfrage zur Wirtschaftspolitik', 
-        type: 'Kleine Anfrage',
-        date: '2025-12-01T10:00:00Z',
-        number: '20/1236'
-      }
-    ],
-    recentSpeeches: [
-      { 
-        id: 's1', 
-        title: 'Debatte zur Wirtschaftspolitik', 
-        type: 'Plenardebatte',
-        date: '2025-12-15T10:00:00Z',
-        speaker: 'Friedrich Merz'
-      },
-      { 
-        id: 's2', 
-        title: 'Rede zur Haushaltspolitik', 
-        type: 'Regierungserklärung',
-        date: '2025-12-12T14:30:00Z',
-        speaker: 'Dr. Maria Schmidt'
-      },
-      { 
-        id: 's3', 
-        title: 'Stellungnahme zur Energiewende', 
-        type: 'Stellungnahme',
-        date: '2025-12-08T09:15:00Z',
-        speaker: 'Dorothee Bär'
-      }
-    ]
-  },
-  {
-    id: 'party2',
-    name: 'SPD',
-    volatility: 'Mittel',
-    contribution: 'medium',
-    numSpeeches: 38,
-    topTopics: [
-      { topic: 'Soziales', stance: 'Pro' },
-      { topic: 'Arbeitnehmerrechte', stance: 'Pro' },
-      { topic: 'Mindestlohn', stance: 'Pro' },
-      { topic: 'Wohnungsbau', stance: 'Pro' }
-    ],
-    members: [
-      { id: 'p2', name: 'Thomas Müller', role: 'MdB', region: 'Nordrhein-Westfalen' },
-      { id: 'p8', name: 'Kevin Kühnert', role: 'Generalsekretär', region: 'Berlin' },
-      { id: 'p10', name: 'Saskia Esken', role: 'Parteivorsitzende', region: 'Baden-Württemberg' }
-    ],
-    activityData: Array.from({ length: 12 }, (_, i) => ({
-      date: `2025-${String(i + 1).padStart(2, '0')}`,
-      value: 70 + Math.floor(Math.random() * 20)
-    })),
-    drucksachen: [
-      { 
-        id: 'd4', 
-        title: 'Antrag zur Sozialpolitik', 
-        type: 'Antrag',
-        date: '2025-12-14T11:00:00Z',
-        number: '20/2001'
-      }
-    ],
-    recentSpeeches: [
-      { 
-        id: 's4', 
-        title: 'Rede zur Sozialpolitik', 
-        type: 'Regierungserklärung',
-        date: '2025-12-14T11:00:00Z',
-        speaker: 'Thomas Müller'
-      }
-    ]
-  }
-];
 
 export default function PartyDetail() {
   const params = useParams();
@@ -138,6 +15,16 @@ export default function PartyDetail() {
   const [electionPeriods, setElectionPeriods] = useState<any[]>([]);
   const [selectedPeriod, setSelectedPeriod] = useState<number | null>(null);
   const [loadingPeriods, setLoadingPeriods] = useState(true);
+  const [timeRange, setTimeRange] = useState<string>('last_year');
+
+  const timeRangeOptions = [
+    { value: 'last_6_months', label: 'Letzte 6 Monate' },
+    { value: 'ytd', label: 'Jahr bis heute' },
+    { value: 'last_year', label: 'Letztes Jahr' },
+    { value: 'last_2_years', label: 'Letzte 2 Jahre' },
+    { value: 'last_5_years', label: 'Letzte 5 Jahre' },
+    { value: 'max', label: 'Alle Daten' },
+  ];
 
   // Fetch election periods
   useEffect(() => {
@@ -165,13 +52,28 @@ export default function PartyDetail() {
   useEffect(() => {
     if (!id || selectedPeriod === null) return;
 
-    setTimeout(() => {
-      // Find party by ID or default to first party
-      const party = MOCK_PARTIES_DATA.find(p => p.id === id) || MOCK_PARTIES_DATA[0];
-      setPartyData(party);
-      setLoading(false);
-    }, 300);
-  }, [id, selectedPeriod]);
+    setLoading(true);
+    
+    const queryParams = new URLSearchParams();
+    queryParams.set('election_period', selectedPeriod.toString());
+    queryParams.set('time_range', timeRange);
+    
+    fetch(`/api/v1/parties/${id}?${queryParams.toString()}`)
+      .then(res => {
+        if (!res.ok) {
+          throw new Error('Failed to fetch party');
+        }
+        return res.json();
+      })
+      .then(data => {
+        setPartyData(data);
+        setLoading(false);
+      })
+      .catch(err => {
+        console.error('Failed to fetch party:', err);
+        setLoading(false);
+      });
+  }, [id, selectedPeriod, timeRange]);
 
   if (loading) {
     return (
@@ -185,7 +87,7 @@ export default function PartyDetail() {
     return (
       <div className="text-center py-20">
         <h2 className="text-xl font-bold text-slate-900">Partei nicht gefunden</h2>
-        <p className="text-slate-500 mt-2">Diese Partei existiert nicht in den Mock-Daten.</p>
+        <p className="text-slate-500 mt-2">Die angeforderte Partei konnte nicht geladen werden.</p>
         <div className="mt-6">
           <BackButton />
         </div>
@@ -193,7 +95,7 @@ export default function PartyDetail() {
     );
   }
 
-  const { recentSpeeches, drucksachen, activityData, members, ...party } = partyData;
+  const { recentSpeeches, printedPapers, activityData, members, ...party } = partyData;
 
   return (
     <div className="space-y-8">
@@ -205,25 +107,43 @@ export default function PartyDetail() {
         <span className="font-medium text-slate-900">{party.name}</span>
       </nav>
 
-      {/* Election Period Selector */}
-      <div className="flex justify-start">
-        <select
-          id="period-select"
-          value={selectedPeriod || ''}
-          onChange={(e) => setSelectedPeriod(Number(e.target.value))}
-          disabled={loadingPeriods}
-          className="rounded-md border-0 py-2 px-3 text-slate-900 ring-1 ring-inset ring-slate-300 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:text-sm bg-white shadow-sm"
-        >
-          {loadingPeriods ? (
-            <option>Laden...</option>
-          ) : (
-            electionPeriods.map(period => (
-              <option key={period.number} value={period.number}>
-                {period.number}. Wahlperiode
+      {/* Election Period and Time Range Selectors */}
+      <div className="flex gap-4 flex-wrap">
+        <div>
+          <label htmlFor="period-select" className="block text-xs font-medium text-slate-700 mb-1">Wahlperiode</label>
+          <select
+            id="period-select"
+            value={selectedPeriod || ''}
+            onChange={(e) => setSelectedPeriod(Number(e.target.value))}
+            disabled={loadingPeriods}
+            className="rounded-md border-0 py-2 px-3 text-slate-900 ring-1 ring-inset ring-slate-300 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:text-sm bg-white shadow-sm"
+          >
+            {loadingPeriods ? (
+              <option>Laden...</option>
+            ) : (
+              electionPeriods.map(period => (
+                <option key={period.number} value={period.number}>
+                  {period.number}. Wahlperiode
+                </option>
+              ))
+            )}
+          </select>
+        </div>
+        <div>
+          <label htmlFor="timerange-select" className="block text-xs font-medium text-slate-700 mb-1">Zeitraum</label>
+          <select
+            id="timerange-select"
+            value={timeRange}
+            onChange={(e) => setTimeRange(e.target.value)}
+            className="rounded-md border-0 py-2 px-3 text-slate-900 ring-1 ring-inset ring-slate-300 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:text-sm bg-white shadow-sm"
+          >
+            {timeRangeOptions.map(option => (
+              <option key={option.value} value={option.value}>
+                {option.label}
               </option>
-            ))
-          )}
-        </select>
+            ))}
+          </select>
+        </div>
       </div>
 
       <div className="bg-white rounded-xl shadow border border-slate-200 p-6 md:p-8 relative flex flex-col">
@@ -232,7 +152,6 @@ export default function PartyDetail() {
             <Share2 className="h-4 w-4" />
             <span>Teilen</span>
           </button>
-          <WatchButton id={id} type="party" label="Beobachten" />
         </div>
 
         <div className="w-full md:pr-32">
@@ -244,7 +163,6 @@ export default function PartyDetail() {
             <Share2 className="h-4 w-4" />
             <span>Teilen</span>
           </button>
-          <WatchButton id={id} type="party" label="Beobachten" />
         </div>
       </div>
 
@@ -260,8 +178,8 @@ export default function PartyDetail() {
         </div>
         <div className="bg-white p-6 rounded-lg shadow border border-slate-100 flex items-center gap-4">
           <div className={`p-3 rounded-lg ${
-            party.contribution === 'high' ? 'bg-green-50 text-green-600' :
-            party.contribution === 'medium' ? 'bg-yellow-50 text-yellow-600' :
+            party.contributionFactor === 'high' ? 'bg-green-50 text-green-600' :
+            party.contributionFactor === 'medium' ? 'bg-yellow-50 text-yellow-600' :
             'bg-red-50 text-red-600'
           }`}>
             <BarChart3 className="h-6 w-6" />
@@ -269,12 +187,12 @@ export default function PartyDetail() {
           <div>
             <p className="text-sm text-slate-500 font-medium">Beitrag</p>
             <p className={`text-2xl font-bold ${
-              party.contribution === 'high' ? 'text-green-600' :
-              party.contribution === 'medium' ? 'text-yellow-600' :
+              party.contributionFactor === 'high' ? 'text-green-600' :
+              party.contributionFactor === 'medium' ? 'text-yellow-600' :
               'text-red-600'
             }`}>
-              {party.contribution === 'high' ? 'Hoch' : 
-               party.contribution === 'medium' ? 'Mittel' : 
+              {party.contributionFactor === 'high' ? 'Hoch' : 
+               party.contributionFactor === 'medium' ? 'Mittel' : 
                'Niedrig'}
             </p>
           </div>
@@ -298,7 +216,7 @@ export default function PartyDetail() {
               {party.topTopics?.map((item: any, idx: number) => (
                 <div key={idx} className="border border-slate-200 rounded-lg p-4 hover:border-blue-300 transition-colors cursor-pointer">
                   <div className="flex justify-between items-start">
-                    <h3 className="font-semibold text-slate-900">{item.topic}</h3>
+                    <h3 className="font-semibold text-slate-900">{item.title}</h3>
                     <span className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full">Top {idx + 1}</span>
                   </div>
                   <div className="mt-3 h-2 bg-slate-100 rounded-full overflow-hidden">
@@ -369,9 +287,9 @@ export default function PartyDetail() {
               <FileText className="h-5 w-5 text-slate-500" />
               Aktuelle Drucksachen
             </h2>
-            {drucksachen && drucksachen.length > 0 ? (
+            {printedPapers && printedPapers.length > 0 ? (
               <ul className="divide-y divide-slate-100">
-                {drucksachen.map((doc: any) => (
+                {printedPapers.map((doc: any) => (
                   <li key={doc.id} className="py-4 hover:bg-slate-50 -mx-4 px-4 transition-colors">
                     <div className="flex justify-between items-start">
                       <div className="flex-1">
