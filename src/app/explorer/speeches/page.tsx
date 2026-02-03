@@ -15,7 +15,7 @@ export default function ExplorerSpeechesPage() {
   useEffect(() => {
     fetch('/api/v1/topics?page_size=1000')
       .then(res => res.json())
-      .then((data: Topic) => {
+      .then((data: any) => {
         let topics: Topic[] = [];
         if (Array.isArray(data)) {
           topics = data;
