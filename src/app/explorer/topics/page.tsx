@@ -38,10 +38,10 @@ export default function ExplorerTopicsPage() {
     }
   };
 
-  // Relevance from API is 0–1; multiply by 100 for display
+  // Relevance from backend is already 0–100
   const relevancePercent = (r: number | null | undefined) => {
     if (r == null) return 0;
-    return Math.min(100, Math.round(r * 100));
+    return Math.min(100, Math.round(r));
   };
   const relevanceDisplay = (r: number | null | undefined) => {
     const pct = relevancePercent(r);
@@ -113,16 +113,6 @@ export default function ExplorerTopicsPage() {
                   Analyse des aktuellen legislativen Diskurses zu {topic.title}.
                 </p>
                 <div className="mt-4 flex items-center gap-4 text-xs text-slate-500">
-                  <div className="flex items-center">
-                    {getTrendIcon(topic.trend ?? "stable")}
-                    <span>
-                      {topic.trend === "up"
-                        ? "Steigend"
-                        : topic.trend === "down"
-                          ? "Fallend"
-                          : "Stabil"}
-                    </span>
-                  </div>
                 </div>
               </div>
               <div className="bg-slate-50 px-5 py-3 border-t border-slate-100 group-hover:bg-blue-50/30 transition-colors space-y-3">

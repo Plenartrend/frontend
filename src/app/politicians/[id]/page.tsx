@@ -9,6 +9,13 @@ import { useEffect, useState, useRef } from "react";
 import { BackButton } from "@/components/ui/BackButton";
 import { useWatchlist } from "@/context/WatchlistContext";
 
+// Format volatility: multiply by 100 and display as score/100
+const formatVolatility = (volatility: string | null | undefined) => {
+  if (!volatility) return 'N/A';
+  const val = parseFloat(volatility) * 100;
+  return `${Math.round(val)}/100`;
+};
+
 export default function PoliticianDetail() {
   const params = useParams();
   const searchParams = useSearchParams();
@@ -323,7 +330,7 @@ export default function PoliticianDetail() {
            </div>
            <div>
              <p className="text-sm text-slate-500 font-medium">Volatilität</p>
-             <p className="text-2xl font-bold text-slate-900">{politician.volatility}</p>
+             <p className="text-2xl font-bold text-slate-900">{formatVolatility(politician.volatility)}</p>
            </div>
         </div>
         <div className="bg-white p-6 rounded-lg shadow border border-slate-100 flex items-center gap-4">

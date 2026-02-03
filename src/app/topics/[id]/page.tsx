@@ -98,7 +98,7 @@ export default function TopicDetail() {
         // Process time-series data - data should already be oldest-to-newest from backend
         const relevanceSeries = (timeSeries.series || []).map((point: any) => ({
           date: point.period,
-          value: Math.min((point.relevance || 0) * 1000, 100) // Scale by 1000 but cap at 100
+          value: Math.min((point.relevance || 0), 100) // Backend already provides 0-100, just cap at 100
         }));
         
         const sentimentSeries = (timeSeries.series || []).map((point: any) => ({
@@ -316,7 +316,7 @@ export default function TopicDetail() {
             <dl className="space-y-4">
               <div className="flex justify-between border-b border-slate-100 pb-2">
                 <dt className="text-sm text-slate-500">Relevanz Score</dt>
-                <dd className="font-semibold text-slate-900">{topicData.relevance != null ? Math.round(topicData.relevance * 100) : 0}/100</dd>
+                <dd className="font-semibold text-slate-900">{topicData.relevance != null ? Math.round(topicData.relevance) : 0}/100</dd>
               </div>
               <div className="flex justify-between border-b border-slate-100 pb-2">
                 <dt className="text-sm text-slate-500">Stimmung</dt>
