@@ -115,39 +115,44 @@ export default function ExplorerTopicsPage() {
                 <div className="mt-4 flex items-center gap-4 text-xs text-slate-500">
                 </div>
               </div>
-              <div className="bg-slate-50 px-5 py-3 border-t border-slate-100 group-hover:bg-blue-50/30 transition-colors space-y-3">
-                <div>
-                  <div className="flex items-center justify-between text-sm text-slate-500">
-                    <span>Relevanz-Score</span>
-                    <span className="font-semibold text-slate-900">
-                      {relevanceDisplay(topic.relevance)}
-                    </span>
-                  </div>
-                  <div className="mt-2 h-1.5 w-full rounded-full bg-slate-200">
-                    <div
-                      className="h-1.5 rounded-full bg-blue-600"
-                      style={{ width: `${relevancePercent(topic.relevance)}%` }}
-                    />
-                  </div>
-                </div>
-                <div>
-                  <div className="flex items-center justify-between text-sm text-slate-500">
-                    <span>Stimmung</span>
-                    <span className="font-semibold text-slate-900">
-                      {sentimentDisplay(topic.sentiment)}
-                    </span>
-                  </div>
-                  <div className="mt-2 h-1.5 w-full rounded-full bg-slate-200 relative overflow-hidden">
-                    {sentimentScore(topic.sentiment) !== 0 ? (
+              <div className="bg-slate-50 px-5 py-2.5 border-t border-slate-100 group-hover:bg-blue-50/30 transition-colors">
+                <div className="grid grid-cols-2 gap-4">
+                  {/* Relevanz */}
+                  <div>
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-xs text-slate-500">Relevanz</span>
+                      <span className="text-xs font-semibold text-slate-900">
+                        {relevanceDisplay(topic.relevance)}
+                      </span>
+                    </div>
+                    <div className="h-1.5 w-full rounded-full bg-slate-200">
                       <div
-                        className={`absolute left-0 top-0 bottom-0 h-full rounded-full ${
-                          sentimentScore(topic.sentiment) > 0 ? "bg-green-500" : "bg-red-500"
-                        }`}
-                        style={{
-                          width: `${Math.abs(sentimentScore(topic.sentiment))}%`,
-                        }}
+                        className="h-1.5 rounded-full bg-blue-500"
+                        style={{ width: `${relevancePercent(topic.relevance)}%` }}
                       />
-                    ) : null}
+                    </div>
+                  </div>
+                  
+                  {/* Stimmung */}
+                  <div>
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-xs text-slate-500">Stimmung</span>
+                      <span className="text-xs font-semibold text-slate-900">
+                        {sentimentDisplay(topic.sentiment)}
+                      </span>
+                    </div>
+                    <div className="h-1.5 w-full rounded-full bg-slate-200 relative overflow-hidden">
+                      {sentimentScore(topic.sentiment) !== 0 ? (
+                        <div
+                          className={`absolute left-0 top-0 bottom-0 h-full rounded-full ${
+                            sentimentScore(topic.sentiment) > 0 ? "bg-green-400" : "bg-red-400"
+                          }`}
+                          style={{
+                            width: `${Math.abs(sentimentScore(topic.sentiment))}%`,
+                          }}
+                        />
+                      ) : null}
+                    </div>
                   </div>
                 </div>
               </div>
