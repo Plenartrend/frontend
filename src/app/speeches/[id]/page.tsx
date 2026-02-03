@@ -79,18 +79,27 @@ export default function SpeechDetail() {
   const renderContent = (text: string) => {
     if (!text) return null;
 
-    const cleanedText = text
-      .split(/\n\s*\n/)
-      .map(p => p.replace(/\n/g, ' '))
-      .join('\n\n');
+    const isolatedText = text.replace(/(\r?\n)(\([^)]*\))/g, '\n\n$2\n\n');
 
-    const parts = cleanedText.split(/(\[HIGHLIGHT\].*?\[\/HIGHLIGHT\])/g);
-    return parts.map((part, index) => {
-      if (part.startsWith('[HIGHLIGHT]')) {
-        const content = part.replace('[HIGHLIGHT]', '').replace('[/HIGHLIGHT]', '');
-        return <mark key={index} className="bg-yellow-100 text-slate-900 px-1 rounded">{content}</mark>;
-      }
-      return <span key={index}>{part}</span>;
+    const paragraphs = isolatedText.split(/\r?\n\s*\r?\n/);
+
+    return paragraphs.map((paragraph, pIndex) => {
+      const cleanedParagraph = paragraph.replace(/\r?\n/g, ' ').trim();
+      if (!cleanedParagraph) return null;
+
+      const parts = cleanedParagraph.split(/(\[HIGHLIGHT\].*?\[\/HIGHLIGHT\])/g);
+      
+      return (
+        <p key={pIndex} className="mb-4 last:mb-0">
+          {parts.map((part, index) => {
+            if (part.startsWith('[HIGHLIGHT]')) {
+              const content = part.replace('[HIGHLIGHT]', '').replace('[/HIGHLIGHT]', '');
+              return <mark key={index} className="bg-yellow-100 text-slate-900 px-1 rounded">{content}</mark>;
+            }
+            return <span key={index}>{part}</span>;
+          })}
+        </p>
+      );
     });
   };
 
@@ -141,9 +150,9 @@ export default function SpeechDetail() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
          {/* Main Content Column (Left) */}
          <div className="lg:col-span-2 space-y-6">
-            <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-8">
+            <div className="bg-white rounded-xl shadow-sm border border-slate-200 py-12 px-20">
                <h2 className="text-lg font-bold text-slate-900 mb-6 border-b border-slate-100 pb-4">Transkript</h2>
-               <div className="prose prose-slate max-w-none text-slate-700 leading-relaxed whitespace-pre-line">
+               <div className="prose prose-slate max-w-none text-slate-700 leading-relaxed">
                   {renderContent(speech.content)}
                </div>
             </div>
