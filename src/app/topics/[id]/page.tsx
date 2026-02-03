@@ -166,14 +166,6 @@ export default function TopicDetail() {
 
       <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4 border-b border-slate-200 pb-6">
         <div>
-          <div className="flex items-center gap-3 mb-2">
-            <span className="inline-flex items-center rounded-full bg-blue-100 px-2.5 py-0.5 text-xs font-medium text-blue-800">
-              {topicData.category}
-            </span>
-            <span className={`text-sm font-medium ${topicData.trend === 'up' ? 'text-green-600' : 'text-slate-500'}`}>
-              {topicData.trend === 'up' ? 'Starker Trend' : 'Stabiler Trend'}
-            </span>
-          </div>
           <h1 className="text-3xl font-bold text-slate-900">{topicData.title}</h1>
           <p className="mt-2 text-lg text-slate-600 max-w-3xl">
             Detaillierte Analyse der legislativen Aktivitäten und Stakeholder-Positionen zu {topicData.title}.
