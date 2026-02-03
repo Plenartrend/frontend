@@ -1,6 +1,6 @@
 "use client";
 
-import {Bell, Search, X, ChevronRight, FileText, Bookmark, Menu, User as UserIcon, Flag} from "lucide-react";
+import {Bell, Search, X, ChevronRight, FileText, Bookmark, Menu, User as UserIcon} from "lucide-react";
 import {useState, useEffect, useRef} from "react";
 import Link from "next/link";
 import {useRouter} from "next/navigation";
@@ -17,7 +17,6 @@ export function Header({onMenuClick}: HeaderProps) {
     const [searchResults, setSearchResults] = useState<{
         topics: any[];
         politicians: any[];
-        campaigns: any[];
     } | null>(null);
     const [showResults, setShowResults] = useState(false);
     const [isMobile, setIsMobile] = useState(false);
@@ -83,7 +82,7 @@ export function Header({onMenuClick}: HeaderProps) {
         router.push(notification.targetUrl);
     };
 
-    const hasResults = searchResults && (searchResults.topics.length > 0 || searchResults.politicians.length > 0 || searchResults.campaigns.length > 0);
+    const hasResults = searchResults && ((searchResults.topics?.length ?? 0) > 0 || (searchResults.politicians?.length ?? 0) > 0);
 
     return (
         <header
@@ -103,7 +102,7 @@ export function Header({onMenuClick}: HeaderProps) {
                 <input
                     type="text"
                     className="block w-full rounded-md border-0 py-1.5 pl-10 text-slate-900 ring-1 ring-inset ring-slate-300 placeholder:text-slate-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:text-sm sm:leading-6"
-                    placeholder={isMobile ? "Suche..." : "Suche nach Themen, Politikern oder Kampagnen..."}
+                    placeholder={isMobile ? "Suche..." : "Suche nach Themen oder Politikern..."}
                     value={searchQuery}
                     onChange={(e) => handleSearch(e.target.value)}
                     onFocus={() => {
@@ -116,7 +115,7 @@ export function Header({onMenuClick}: HeaderProps) {
                         className="absolute top-full left-0 w-full mt-1 bg-white rounded-md shadow-lg ring-1 ring-black ring-opacity-5 max-h-[80vh] overflow-y-auto z-50">
                         {hasResults ? (
                             <div className="py-2">
-                                {searchResults.topics.length > 0 && (
+                                {searchResults.topics?.length > 0 && (
                                     <div className="px-2 py-2">
                                         <h3 className="px-2 text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Themen</h3>
                                         {searchResults.topics.map((topic: any) => (
@@ -136,7 +135,7 @@ export function Header({onMenuClick}: HeaderProps) {
                                     </div>
                                 )}
 
-                                {searchResults.politicians.length > 0 && (
+                                {searchResults.politicians?.length > 0 && (
                                     <div className="px-2 py-2 border-t border-slate-100">
                                         <h3 className="px-2 text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Abgeordnete</h3>
                                         {searchResults.politicians.map((politician: any) => (
@@ -152,26 +151,6 @@ export function Header({onMenuClick}: HeaderProps) {
                                                     <p className="text-sm font-medium text-slate-700 group-hover:text-blue-600">{politician.name}</p>
                                                     <p className="text-xs text-slate-500">{politician.party}</p>
                                                 </div>
-                                                <ChevronRight className="h-4 w-4 text-slate-300 ml-auto"/>
-                                            </button>
-                                        ))}
-                                    </div>
-                                )}
-
-                                {searchResults.campaigns.length > 0 && (
-                                    <div className="px-2 py-2 border-t border-slate-100">
-                                        <h3 className="px-2 text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Kampagnen</h3>
-                                        {searchResults.campaigns.map((campaign: any) => (
-                                            <button
-                                                key={campaign.id}
-                                                onClick={() => handleResultClick(`/campaigns/${campaign.id}`)}
-                                                className="w-full text-left px-2 py-2 hover:bg-slate-50 rounded-md flex items-center gap-3 group"
-                                            >
-                                                <div className="p-1.5 bg-amber-50 text-amber-600 rounded">
-                                                    <Flag className="h-4 w-4"/>
-                                                </div>
-                                                <span
-                                                    className="text-sm font-medium text-slate-700 group-hover:text-blue-600">{campaign.name}</span>
                                                 <ChevronRight className="h-4 w-4 text-slate-300 ml-auto"/>
                                             </button>
                                         ))}
